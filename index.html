@@ -784,28 +784,134 @@
     });
 
     // --- Key bindings (Makey Makey) ---
-    document.addEventListener('keydown', (e) => {
+document.addEventListener('keydown', (e) => {
   const key = e.key.toLowerCase();
 
-  // --- NEW: handle popup keys first ---
+  // --- Handle confirm popup keys first ---
   if (document.getElementById('confirmPopup').classList.contains('active')) {
-    if (key === 'w') { document.getElementById('optNah').click(); }
-    if (key === 's') { document.getElementById('optYes').click(); }
-    if (key === 'a') { document.getElementById('optDef').click(); }
+    if (key === 'w') {
+      // Nah
+      showPopup('confirmPopup', false);
+    }
+    if (key === 's') {
+      // Yes
+      const sel = state.foodCards.filter(fc => !fc.reserved)[state.selectionIndex];
+      if (sel) {
+        const afford = canAfford(sel.cost, currentCoins());
+        if (afford.ok) {
+          spendCoins(sel.cost, currentCoins(), afford.useSpecial);
+          currentPlayerData().foodValue += sel.value;
+          const idx = state.foodCards.findIndex(fc => fc.id === sel.id);
+          state.foodCards.splice(idx,1);
+        } else {
+          alert('Not enough coins to buy this food.');
+        }
+      }
+      showPopup('confirmPopup', false);
+      renderScene3();
+    }
+    if (key === 'a') {
+      // Defend
+      const sel = state.foodCards.filter(fc => !fc.reserved)[state.selectionIndex];
+      if (sel) {
+        const deckIdx = state.foodCards.findIndex(fc => fc.id === sel.id);
+        state.foodCards[deckIdx].reserved = true;
+        currentPlayerData().defendedIds.push(sel.id);
+        addSpecialCoin(state.currentPlayer);
+        showPopup('confirmPopup', false);
+        showPopup('specialPopup', true);
+      }
+    }
     return; // stop here so background scene doesn’t react
   }
 
+  // --- Handle special popup keys ---
   if (document.getElementById('specialPopup').classList.contains('active')) {
-    if (key === 's') { document.getElementById('specialOk').click(); }
+    if (key === 's') {
+      showPopup('specialPopup', false);
+      renderScene3();
+    }
     return;
   }
 
-  // --- existing scene logic continues below ---
+  // --- Scene 1: Choose players ---
   if (state.scene === 1) {
-    // ...
+    if (key === 'w') changePlayers(-1);
+    if (key === 'a') changePlayers(+1);
+    if (key === 's') confirmPlayers();
+    return;
   }
-  // etc.
+
+  // --- Scene 2: Coin selection ---
+  if (state.scene === 2) {
+    if (key === 'd') addCoinForCurrent('R');
+    if (key === 'f') addCoinForCurrent('Y');
+    if (key === 'g') addCoinForCurrent('B');
+    if (key === 'w') {
+      let prev = state.currentPlayer;
+      do {
+        prev = (prev - 1 + state.players) % state.players;
+      } while (!state.playersData[prev].alive);
+      state.currentPlayer = prev;
+      renderCoinSelection();
+    }
+    if (key === 'a') {
+      advancePlayerToNextAlive();
+      renderCoinSelection();
+    }
+    if (key === 's') coinSelectionConfirm();
+    return;
+  }
+
+  // --- Scene 3: Shopping ---
+  if (state.scene === 3) {
+    if (key === 'w') updateSelection(-1);
+    if (key === 'a') updateSelection(+1);
+    if (key === 's') {
+      const sel = state.foodCards.filter(fc => !fc.reserved)[state.selectionIndex];
+      if (!sel) return;
+      document.getElementById('confirmText').textContent =
+        `Buy ${sel.name}? Value ${sel.value} (R${sel.cost.R}/Y${sel.cost.Y}/B${sel.cost.B})`;
+      showPopup('confirmPopup', true);
+    }
+    if (key === ' ') {
+      currentPlayerData().completed = true;
+      let next = state.currentPlayer;
+      do {
+        next = (next + 1) % state.players;
+      } while (!state.playersData[next].alive || state.playersData[next].completed);
+      const allDone = state.playersData.every(p => !p.alive || p.completed);
+      if (allDone) {
+        enterStatus();
+      } else {
+        state.currentPlayer = next;
+        renderScene3();
+      }
+    }
+    return;
+  }
+
+  // --- Scene 5: Status board ---
+  if (state.scene === 5) {
+    if (key === 's') {
+      state.playersData.forEach(p => {
+        if (!p.alive) return;
+        const sumStored = p.stored.reduce((acc, it) => acc + it.value, 0);
+        p.foodValue += sumStored;
+        p.stored = [];
+      });
+      enterCoinSelection();
+    }
+    return;
+  }
+
+  // --- Scene 7: Victory ---
+  if (state.scene === 7) {
+    // handled by button
+    return;
+  }
 });
+
 
       // Global controls
       if (state.scene === 1) {
