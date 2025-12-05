@@ -248,8 +248,8 @@
           <h3>Game goal</h3>
           <p>Balance your food value each round—too little and you starve, too much and you waste. Only balance wins.</p>
           <ul>
-            <li>3 coins: <span class="pill"><span class="dot red"></span> Red</span>, <span class="pill"><span class="dot yellow"></span> Yellow</span>, <span class="pill"><span class="dot blue"></span> Blue</span></li>
-            <li><span class="pill"><span class="dot special"></span> Special coin</span> can replace any coin or store one food for next round.</li>
+            <li><span class="pill"><span class="dot red"></span> Red</span>, <span class="pill"><span class="dot yellow"></span> Yellow</span>, <span class="pill"><span class="dot blue"></span> Blue</span> coins</li>
+            <li><span class="pill"><span class="dot special"></span> Special coin</span> replaces any coin or stores one food for next round.</li>
             <li>Coins carry over; food doesn’t unless stored.</li>
             <li>Starvation threshold is hidden and rises each round.</li>
           </ul>
@@ -491,7 +491,7 @@
       const toPick = state.round === 1 ? state.coinsToPickStart : state.coinsToPickSubsequent;
       document.getElementById('coinsToPick').textContent = toPick;
       state.playersData.forEach(p => p.completed = false); // reset completion flag at coin phase
-      state.currentPlayer = 0;
+      state.currentPlayer = firstAliveIndex();
       renderCoinSelection();
     }
 
@@ -521,7 +521,7 @@
       });
     }
 
-    // Track per-round picks without storing a separate structure: use a temp field.
+    // Track per-round picks
     function currentPickCountThisRound() {
       if (!currentPlayerData().pickRound) currentPlayerData().pickRound = 0;
       return currentPlayerData().pickRound;
@@ -529,7 +529,7 @@
     function addCoinForCurrent(k) {
       const toPick = state.round === 1 ? state.coinsToPickStart : state.coinsToPickSubsequent;
       let picked = currentPickCountThisRound();
-      if (picked >= toPick) return; // already picked enough
+      if (picked >= toPick) return;
       currentCoins()[k] += 1;
       currentPlayerData().pickRound = picked + 1;
       renderCoinSelection();
@@ -556,8 +556,6 @@
       state.currentPlayer = next;
     }
     function allPlayersVisitedThisPhase() {
-      // after coin selection confirm we mark nothing, we iterate until we reach the first again
-      // simpler: check if the next alive after confirming is the smallest alive index (we keep a visited flag)
       if (!state._visited) state._visited = new Set();
       state._visited.add(state.currentPlayer);
       const aliveIdx = state.playersData
@@ -590,7 +588,7 @@
       available.forEach((fc, idx) => {
         const card = document.createElement('div');
         card.className = 'card';
-        if (idx === state.selectionIndex) card.style.boxShadow = '0 0 0 3px ' + 'rgba(33,158,188,0.4)';
+        if (idx === state.selectionIndex) card.style.boxShadow = '0 0 0 3px rgba(33,158,188,0.4)';
         card.innerHTML = `
           <h3>${fc.name}</h3>
           <div class="pill"><strong>Value</strong> ${fc.value}</div>
@@ -629,7 +627,7 @@
       });
     }
 
-    // Confirm popup actions
+    // Confirm popup actions (mouse)
     document.getElementById('optNah').addEventListener('click', () => {
       showPopup('confirmPopup', false);
     });
@@ -643,7 +641,6 @@
       }
       spendCoins(sel.cost, currentCoins(), afford.useSpecial);
       currentPlayerData().foodValue += sel.value;
-      // Remove this card (bought)
       const idx = state.foodCards.findIndex(fc => fc.id === sel.id);
       state.foodCards.splice(idx,1);
       showPopup('confirmPopup', false);
@@ -652,11 +649,9 @@
     document.getElementById('optDef').addEventListener('click', () => {
       const sel = state.foodCards.filter(fc => !fc.reserved)[state.selectionIndex];
       if (!sel) { showPopup('confirmPopup', false); return; }
-      // Reserve this card
       const deckIdx = state.foodCards.findIndex(fc => fc.id === sel.id);
       state.foodCards[deckIdx].reserved = true;
       currentPlayerData().defendedIds.push(sel.id);
-      // Gain special coin immediately
       addSpecialCoin(state.currentPlayer);
       showPopup('confirmPopup', false);
       showPopup('specialPopup', true);
@@ -664,14 +659,12 @@
     document.getElementById('optStore').addEventListener('click', () => {
       const sel = state.foodCards.filter(fc => !fc.reserved)[state.selectionIndex];
       if (!sel) { showPopup('confirmPopup', false); return; }
-      // Use special coin to store this food (no coins required, but consumes 1 special coin)
       if (currentCoins().S <= 0) {
         alert('You need a special coin to store food for next round.');
         return;
       }
       currentCoins().S -= 1;
       currentPlayerData().stored.push({ id: sel.id, value: sel.value });
-      // Remove this card from deck
       const idx = state.foodCards.findIndex(fc => fc.id === sel.id);
       state.foodCards.splice(idx,1);
       showPopup('confirmPopup', false);
@@ -706,7 +699,6 @@
       let wasteIndex = null;
       if (alivePlayers.length > 2) {
         const maxVal = Math.max(...alivePlayers.map(p => p.foodValue));
-        // If there is a unique highest, that player is wasteful
         const tops = alivePlayers.filter(p => p.foodValue === maxVal);
         if (tops.length === 1) wasteIndex = tops[0].index;
       }
@@ -716,14 +708,9 @@
         .filter(p => p.foodValue < threshold)
         .map(p => p.index);
 
-      // Waste elimination applies only if alivePlayers > 2
       const eliminated = new Set([...starvedIndices]);
       if (wasteIndex !== null) eliminated.add(wasteIndex);
 
-      // Defend obligation check will be enforced next round: if a player defended but doesn’t buy that item next round, eliminate then.
-      // We mark obligations here by keeping defendedIds.
-
-      // Build table
       const msgs = [];
       state.playersData.forEach((p, i) => {
         const tr = document.createElement('tr');
@@ -746,10 +733,9 @@
       // Apply eliminations
       eliminated.forEach(i => state.playersData[i].alive = false);
 
-      // Reset per-round food (doesn’t carry over), then add stored items into next round at start
+      // Reset per-round food (doesn’t carry over)
       state.playersData.forEach(p => {
         p.foodValue = 0;
-        // Clear reserved flags from deck; obligation tracked via defendedIds
       });
 
       // Advance round number
@@ -784,136 +770,56 @@
     });
 
     // --- Key bindings (Makey Makey) ---
-document.addEventListener('keydown', (e) => {
-  const key = e.key.toLowerCase();
+    document.addEventListener('keydown', (e) => {
+      const key = e.key.toLowerCase();
 
-  // --- Handle confirm popup keys first ---
-  if (document.getElementById('confirmPopup').classList.contains('active')) {
-    if (key === 'w') {
-      // Nah
-      showPopup('confirmPopup', false);
-    }
-    if (key === 's') {
-      // Yes
-      const sel = state.foodCards.filter(fc => !fc.reserved)[state.selectionIndex];
-      if (sel) {
-        const afford = canAfford(sel.cost, currentCoins());
-        if (afford.ok) {
-          spendCoins(sel.cost, currentCoins(), afford.useSpecial);
-          currentPlayerData().foodValue += sel.value;
-          const idx = state.foodCards.findIndex(fc => fc.id === sel.id);
-          state.foodCards.splice(idx,1);
-        } else {
-          alert('Not enough coins to buy this food.');
+      // --- Handle confirm popup keys first ---
+      if (document.getElementById('confirmPopup').classList.contains('active')) {
+        if (key === 'w') {
+          showPopup('confirmPopup', false); // Nah
         }
+        if (key === 's') {
+          // Yes
+          const sel = state.foodCards.filter(fc => !fc.reserved)[state.selectionIndex];
+          if (sel) {
+            const afford = canAfford(sel.cost, currentCoins());
+            if (afford.ok) {
+              spendCoins(sel.cost, currentCoins(), afford.useSpecial);
+              currentPlayerData().foodValue += sel.value;
+              const idx = state.foodCards.findIndex(fc => fc.id === sel.id);
+              state.foodCards.splice(idx,1);
+            } else {
+              alert('Not enough coins to buy this food (special coin replaces only one).');
+            }
+          }
+          showPopup('confirmPopup', false);
+          renderScene3();
+        }
+        if (key === 'a') {
+          // Defend
+          const sel = state.foodCards.filter(fc => !fc.reserved)[state.selectionIndex];
+          if (sel) {
+            const deckIdx = state.foodCards.findIndex(fc => fc.id === sel.id);
+            state.foodCards[deckIdx].reserved = true;
+            currentPlayerData().defendedIds.push(sel.id);
+            addSpecialCoin(state.currentPlayer);
+            showPopup('confirmPopup', false);
+            showPopup('specialPopup', true);
+          }
+        }
+        return; // stop here so background scene doesn’t react
       }
-      showPopup('confirmPopup', false);
-      renderScene3();
-    }
-    if (key === 'a') {
-      // Defend
-      const sel = state.foodCards.filter(fc => !fc.reserved)[state.selectionIndex];
-      if (sel) {
-        const deckIdx = state.foodCards.findIndex(fc => fc.id === sel.id);
-        state.foodCards[deckIdx].reserved = true;
-        currentPlayerData().defendedIds.push(sel.id);
-        addSpecialCoin(state.currentPlayer);
-        showPopup('confirmPopup', false);
-        showPopup('specialPopup', true);
+
+      // --- Handle special popup keys ---
+      if (document.getElementById('specialPopup').classList.contains('active')) {
+        if (key === 's') {
+          showPopup('specialPopup', false);
+          renderScene3();
+        }
+        return;
       }
-    }
-    return; // stop here so background scene doesn’t react
-  }
 
-  // --- Handle special popup keys ---
-  if (document.getElementById('specialPopup').classList.contains('active')) {
-    if (key === 's') {
-      showPopup('specialPopup', false);
-      renderScene3();
-    }
-    return;
-  }
-
-  // --- Scene 1: Choose players ---
-  if (state.scene === 1) {
-    if (key === 'w') changePlayers(-1);
-    if (key === 'a') changePlayers(+1);
-    if (key === 's') confirmPlayers();
-    return;
-  }
-
-  // --- Scene 2: Coin selection ---
-  if (state.scene === 2) {
-    if (key === 'd') addCoinForCurrent('R');
-    if (key === 'f') addCoinForCurrent('Y');
-    if (key === 'g') addCoinForCurrent('B');
-    if (key === 'w') {
-      let prev = state.currentPlayer;
-      do {
-        prev = (prev - 1 + state.players) % state.players;
-      } while (!state.playersData[prev].alive);
-      state.currentPlayer = prev;
-      renderCoinSelection();
-    }
-    if (key === 'a') {
-      advancePlayerToNextAlive();
-      renderCoinSelection();
-    }
-    if (key === 's') coinSelectionConfirm();
-    return;
-  }
-
-  // --- Scene 3: Shopping ---
-  if (state.scene === 3) {
-    if (key === 'w') updateSelection(-1);
-    if (key === 'a') updateSelection(+1);
-    if (key === 's') {
-      const sel = state.foodCards.filter(fc => !fc.reserved)[state.selectionIndex];
-      if (!sel) return;
-      document.getElementById('confirmText').textContent =
-        `Buy ${sel.name}? Value ${sel.value} (R${sel.cost.R}/Y${sel.cost.Y}/B${sel.cost.B})`;
-      showPopup('confirmPopup', true);
-    }
-    if (key === ' ') {
-      currentPlayerData().completed = true;
-      let next = state.currentPlayer;
-      do {
-        next = (next + 1) % state.players;
-      } while (!state.playersData[next].alive || state.playersData[next].completed);
-      const allDone = state.playersData.every(p => !p.alive || p.completed);
-      if (allDone) {
-        enterStatus();
-      } else {
-        state.currentPlayer = next;
-        renderScene3();
-      }
-    }
-    return;
-  }
-
-  // --- Scene 5: Status board ---
-  if (state.scene === 5) {
-    if (key === 's') {
-      state.playersData.forEach(p => {
-        if (!p.alive) return;
-        const sumStored = p.stored.reduce((acc, it) => acc + it.value, 0);
-        p.foodValue += sumStored;
-        p.stored = [];
-      });
-      enterCoinSelection();
-    }
-    return;
-  }
-
-  // --- Scene 7: Victory ---
-  if (state.scene === 7) {
-    // handled by button
-    return;
-  }
-});
-
-
-      // Global controls
+      // --- Scene 1: Choose players ---
       if (state.scene === 1) {
         if (key === 'w') changePlayers(-1);
         if (key === 'a') changePlayers(+1);
@@ -921,13 +827,12 @@ document.addEventListener('keydown', (e) => {
         return;
       }
 
+      // --- Scene 2: Coin selection ---
       if (state.scene === 2) {
-        // Coin selection: D/F/G add coins; W/A switch players; S confirm
         if (key === 'd') addCoinForCurrent('R');
         if (key === 'f') addCoinForCurrent('Y');
         if (key === 'g') addCoinForCurrent('B');
         if (key === 'w') {
-          // previous alive player
           let prev = state.currentPlayer;
           do {
             prev = (prev - 1 + state.players) % state.players;
@@ -943,11 +848,11 @@ document.addEventListener('keydown', (e) => {
         return;
       }
 
+      // --- Scene 3: Shopping ---
       if (state.scene === 3) {
-        if (key === 'w') updateSelection(-1); // prev card
-        if (key === 'a') updateSelection(+1); // next card
+        if (key === 'w') updateSelection(-1);
+        if (key === 'a') updateSelection(+1);
         if (key === 's') {
-          // open confirm popup
           const sel = state.foodCards.filter(fc => !fc.reserved)[state.selectionIndex];
           if (!sel) return;
           document.getElementById('confirmText').textContent =
@@ -955,33 +860,13 @@ document.addEventListener('keydown', (e) => {
           showPopup('confirmPopup', true);
         }
         if (key === ' ') {
-          // complete this player's shopping
           currentPlayerData().completed = true;
-          // obligation check: if player defended something this round, they must buy it NEXT round.
-          // We enforce next round by checking at the next status phase if defendedIds remain from previous round (we mark round attached).
-          // For now, mark defended ids with round number.
-          // Move to next player or end round
           let next = state.currentPlayer;
           do {
             next = (next + 1) % state.players;
           } while (!state.playersData[next].alive || state.playersData[next].completed);
-          // If all alive players completed
           const allDone = state.playersData.every(p => !p.alive || p.completed);
           if (allDone) {
-            // Handle defend obligation: if someone had defended last round and didn’t buy it this round => eliminate
-            // Implementation: store obligations as defendedIdsPrevRound; if remains after shopping, eliminate
-            state.playersData.forEach((p, i) => {
-              if (!p.alive) return;
-              // If they had defended previously and the food card with that id still exists in deck next round start, we check later
-              // Simpler approach: track defending this round, and if after status phase their defendedIds still contain items, mark eliminate at the NEXT status.
-              // To keep within scope, enforce now: if player defended this round but didn’t buy the same item (not in stored; not in foodValue purchase), eliminate.
-              // Approximation: if defendedIds.length > 0 at end of shopping, eliminate for waste rule (obligation broken)
-              if (p.defendedIds.length > 0) {
-                // If the defended card is not bought (we can’t perfectly detect), we apply a strict penalty:
-                p.alive = false;
-                p.defendedIds = [];
-              }
-            });
             enterStatus();
           } else {
             state.currentPlayer = next;
@@ -991,12 +876,11 @@ document.addEventListener('keydown', (e) => {
         return;
       }
 
+      // --- Scene 5: Status board ---
       if (state.scene === 5) {
         if (key === 's') {
-          // Start next round coin selection and apply stored foods
           state.playersData.forEach(p => {
             if (!p.alive) return;
-            // Stored food becomes active this round
             const sumStored = p.stored.reduce((acc, it) => acc + it.value, 0);
             p.foodValue += sumStored;
             p.stored = [];
@@ -1006,9 +890,10 @@ document.addEventListener('keydown', (e) => {
         return;
       }
 
+      // --- Scene 7: Victory ---
       if (state.scene === 7) {
-        // victory
-        // S or refresh handled by button
+        // handled by button
+        return;
       }
     });
 
