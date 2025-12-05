@@ -785,7 +785,27 @@
 
     // --- Key bindings (Makey Makey) ---
     document.addEventListener('keydown', (e) => {
-      const key = e.key.toLowerCase();
+  const key = e.key.toLowerCase();
+
+  // --- NEW: handle popup keys first ---
+  if (document.getElementById('confirmPopup').classList.contains('active')) {
+    if (key === 'w') { document.getElementById('optNah').click(); }
+    if (key === 's') { document.getElementById('optYes').click(); }
+    if (key === 'a') { document.getElementById('optDef').click(); }
+    return; // stop here so background scene doesn’t react
+  }
+
+  if (document.getElementById('specialPopup').classList.contains('active')) {
+    if (key === 's') { document.getElementById('specialOk').click(); }
+    return;
+  }
+
+  // --- existing scene logic continues below ---
+  if (state.scene === 1) {
+    // ...
+  }
+  // etc.
+});
 
       // Global controls
       if (state.scene === 1) {
