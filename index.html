@@ -1,904 +1,750 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Last Plate Standing</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Last Plate Standing</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root {
+  --bg: #FFF7E6;
+  --primary: #FFB703;
+  --accent: #219EBC;
+  --accent2: #8ECAE6;
+  --ok: #2CB67D;
+  --warn: #EF476F;
+  --text: #2B2D42;
+  --card: #FFFFFF;
+  --muted: #6C757D;
+  --yellow: #FFD166;
+  --red: #E76F51;
+  --blue: #3A86FF;
+  --special: #9B5DE5;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background: linear-gradient(120deg, var(--bg), #FFFBEA);
+  color: var(--text);
+}
+header {
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+header h1 { margin: 0; font-size: 20px; letter-spacing: 0.3px; }
+header .keys { font-size: 14px; opacity: 0.9; }
 
-  <style>
-    :root {
-      /* Happy palette */
-      --bg: #FFF7E6;         /* soft warm background */
-      --primary: #FFB703;    /* sunny orange */
-      --accent: #219EBC;     /* cheerful cyan-blue */
-      --accent2: #8ECAE6;    /* light sky */
-      --ok: #2CB67D;         /* fresh green */
-      --warn: #EF476F;       /* friendly red/pink */
-      --text: #2B2D42;       /* deep slate */
-      --card: #FFFFFF;       /* white cards */
-      --muted: #6C757D;
-      --yellow: #FFD166;
-      --red: #E76F51;
-      --blue: #3A86FF;
-      --special: #9B5DE5;    /* purple for special coin */
-    }
+main { max-width: 1000px; margin: 24px auto; padding: 0 16px 40px; }
+.scene {
+  display: none;
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.08);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.scene.active { display: block; }
+h2 { margin-top: 0; color: var(--accent); }
 
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      background: linear-gradient(120deg, var(--bg), #FFFBEA);
-      color: var(--text);
-    }
+.row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 12px; border-radius: 999px;
+  background: #F8F9FA; border: 1px solid #E9ECEF; font-size: 14px;
+}
+.pill .dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot.yellow { background: var(--yellow); }
+.dot.red { background: var(--red); }
+.dot.blue { background: var(--blue); }
+.dot.special { background: var(--special); }
 
-    header {
-      background: linear-gradient(90deg, var(--accent2), var(--accent));
-      color: white;
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
+.card { border: 1px solid #eee; border-radius: 12px; padding: 16px; background: #fff; min-width: 220px; max-width: 280px; flex: 1; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
 
-    header h1 {
-      margin: 0;
-      font-size: 20px;
-      letter-spacing: 0.3px;
-    }
+.btn {
+  display: inline-block; background: var(--accent); color: white;
+  border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer;
+  font-weight: 600; box-shadow: 0 4px 12px rgba(33, 158, 188, 0.2);
+  transition: transform 0.02s ease-in;
+}
+.btn:active { transform: translateY(1px); }
+.btn.secondary { background: var(--accent2); }
+.btn.ok { background: var(--ok); }
+.btn.warn { background: var(--warn); }
 
-    header .keys {
-      font-size: 14px;
-      opacity: 0.9;
-    }
+.help {
+  background: #FFF4D6; border: 1px dashed #FFD07B; color: #7A5B00;
+  border-radius: 10px; padding: 12px 14px; font-size: 14px; margin: 12px 0;
+}
+.kbd {
+  display: inline-block; padding: 3px 6px; border: 1px solid #ddd;
+  border-bottom-width: 3px; border-radius: 6px; background: #fafafa;
+  font-weight: 700; font-size: 13px; margin: 0 2px;
+}
 
-    main {
-      max-width: 1000px;
-      margin: 24px auto;
-      padding: 0 16px 40px;
-    }
+.meter { height: 10px; background: #EEF6FF; border-radius: 6px; overflow: hidden; margin-top: 8px; }
+.meter > div {
+  height: 100%;
+  background: linear-gradient(90deg, var(--ok), var(--accent));
+  width: 0%;
+  transition: width 200ms ease;
+}
 
-    .scene {
-      display: none;
-      background: var(--card);
-      border-radius: 16px;
-      box-shadow: 0 10px 22px rgba(0,0,0,0.08);
-      padding: 24px;
-      margin-bottom: 24px;
-    }
+.popup {
+  position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.35); padding: 20px; z-index: 10;
+}
+.popup.active { display: flex; }
+.popup .box {
+  background: white; border-radius: 16px; max-width: 520px; width: 100%;
+  padding: 20px; box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+}
+.box h3 { margin-top: 0; color: var(--accent); }
 
-    .scene.active { display: block; }
+table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; font-size: 14px; }
+th { color: var(--muted); font-weight: 600; }
+.note { color: var(--muted); font-size: 13px; }
 
-    h2 {
-      margin-top: 0;
-      color: var(--accent);
-    }
+footer { text-align: center; color: var(--muted); font-size: 12px; padding: 14px 0 24px; }
 
-    .row {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
+#selectedFoodPanel {
+  position: sticky;
+  top: 20px;
+  align-self: flex-start;
+}
 
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: #F8F9FA;
-      border: 1px solid #E9ECEF;
-      font-size: 14px;
-    }
-
-    .pill .dot {
-      width: 10px; height: 10px; border-radius: 50%;
-    }
-    .dot.yellow { background: var(--yellow); }
-    .dot.red    { background: var(--red); }
-    .dot.blue   { background: var(--blue); }
-    .dot.special{ background: var(--special); }
-
-    .card {
-      border: 1px solid #eee;
-      border-radius: 12px;
-      padding: 16px;
-      background: #fff;
-      min-width: 220px;
-      max-width: 280px;
-      flex: 1;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
-    }
-
-    .btn {
-      display: inline-block;
-      background: var(--accent);
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 600;
-      box-shadow: 0 4px 12px rgba(33, 158, 188, 0.2);
-      transition: transform 0.02s ease-in;
-    }
-    .btn:active { transform: translateY(1px); }
-    .btn.secondary { background: var(--accent2); }
-    .btn.ok { background: var(--ok); }
-    .btn.warn { background: var(--warn); }
-
-    .help {
-      background: #FFF4D6;
-      border: 1px dashed #FFD07B;
-      color: #7A5B00;
-      border-radius: 10px;
-      padding: 12px 14px;
-      font-size: 14px;
-      margin: 12px 0;
-    }
-
-    .kbd {
-      display: inline-block;
-      padding: 3px 6px;
-      border: 1px solid #ddd;
-      border-bottom-width: 3px;
-      border-radius: 6px;
-      background: #fafafa;
-      font-weight: 700;
-      font-size: 13px;
-      margin: 0 2px;
-    }
-
-    .bar {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin: 12px 0 0;
-    }
-
-    .meter {
-      height: 10px;
-      background: #EEF6FF;
-      border-radius: 6px;
-      overflow: hidden;
-      margin-top: 8px;
-    }
-    .meter > div {
-      height: 100%;
-      background: linear-gradient(90deg, var(--ok), var(--accent));
-      width: 0%;
-      transition: width 200ms ease;
-    }
-
-    .popup {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0,0,0,0.35);
-      padding: 20px;
-      z-index: 10;
-    }
-    .popup.active { display: flex; }
-
-    .popup .box {
-      background: white;
-      border-radius: 16px;
-      max-width: 520px;
-      width: 100%;
-      padding: 20px;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.18);
-    }
-    .box h3 { margin-top: 0; color: var(--accent); }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 6px;
-    }
-    th, td {
-      text-align: left;
-      padding: 10px 8px;
-      border-bottom: 1px solid #eee;
-      font-size: 14px;
-    }
-    th { color: var(--muted); font-weight: 600; }
-    .note { color: var(--muted); font-size: 13px; }
-
-    footer {
-      text-align: center;
-      color: var(--muted);
-      font-size: 12px;
-      padding: 14px 0 24px;
-    }
-  </style>
+.bar { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0 0; }
+</style>
 </head>
+
 <body>
-  <header>
-    <h1>Last Plate Standing</h1>
-    <div class="keys">
-      Controls: <span class="kbd">W</span> Prev • <span class="kbd">A</span> Next •
-      <span class="kbd">S</span> Ok • Coins: <span class="kbd">D</span> Red, <span class="kbd">F</span> Yellow, <span class="kbd">G</span> Blue •
-      <span class="kbd">Space</span> Complete
+<header>
+  <h1>Last Plate Standing</h1>
+  <div class="keys">
+    Controls: <span class="kbd">W</span> Prev • <span class="kbd">A</span> Next •
+    <span class="kbd">S</span> Ok • Coins: <span class="kbd">D</span> Red, <span class="kbd">F</span> Yellow, <span class="kbd">G</span> Blue •
+    <span class="kbd">Space</span> Complete
+  </div>
+</header>
+
+<main>
+  <!-- Scene 1: Choose players -->
+  <section id="scene1" class="scene active">
+    <h2>Choose number of players</h2>
+    <p class="help">Use W/A to change the number. Press S to confirm. Minimum 2 players.</p>
+    <div class="row">
+      <div class="card">
+        <div class="pill"><strong>Players:</strong> <span id="playerCount">2</span></div>
+        <div class="meter"><div id="playerMeter"></div></div>
+        <div class="bar">
+          <button class="btn secondary" id="prevPlayersBtn">Prev (W)</button>
+          <button class="btn secondary" id="nextPlayersBtn">Next (A)</button>
+          <button class="btn ok" id="confirmPlayersBtn">Ok (S)</button>
+        </div>
+      </div>
+      <div class="card" style="flex:2;">
+        <h3>Game goal</h3>
+        <p>Balance your food value each round—too little and you starve, too much and you waste. Only balance wins.</p>
+        <ul>
+          <li><span class="pill"><span class="dot red"></span> Red</span>, <span class="pill"><span class="dot yellow"></span> Yellow</span>, <span class="pill"><span class="dot blue"></span> Blue</span> coins</li>
+          <li><span class="pill"><span class="dot special"></span> Special coin</span> replaces any coin or stores one food for next round.</li>
+          <li>Coins carry over; food doesn’t unless stored.</li>
+          <li>Starvation threshold is hidden and rises each round.</li>
+        </ul>
+      </div>
     </div>
-  </header>
+  </section>
 
-  <main>
-    <!-- Scene 1: Choose players -->
-    <section id="scene1" class="scene active">
-      <h2>Choose number of players</h2>
-      <p class="help">Use W/A to change the number. Press S to confirm. Minimum 2 players.</p>
-      <div class="row">
-        <div class="card">
-          <div class="pill"><strong>Players:</strong> <span id="playerCount">2</span></div>
-          <div class="meter"><div id="playerMeter"></div></div>
-          <div class="bar">
-            <button class="btn secondary" id="prevPlayersBtn">Prev (W)</button>
-            <button class="btn secondary" id="nextPlayersBtn">Next (A)</button>
-            <button class="btn ok" id="confirmPlayersBtn">Ok (S)</button>
-          </div>
-        </div>
-        <div class="card" style="flex:2;">
-          <h3>Game goal</h3>
-          <p>Balance your food value each round—too little and you starve, too much and you waste. Only balance wins.</p>
-          <ul>
-            <li><span class="pill"><span class="dot red"></span> Red</span>, <span class="pill"><span class="dot yellow"></span> Yellow</span>, <span class="pill"><span class="dot blue"></span> Blue</span> coins</li>
-            <li><span class="pill"><span class="dot special"></span> Special coin</span> replaces any coin or stores one food for next round.</li>
-            <li>Coins carry over; food doesn’t unless stored.</li>
-            <li>Starvation threshold is hidden and rises each round.</li>
-          </ul>
-        </div>
+  <!-- Scene 2: Coin selection -->
+  <section id="scene2" class="scene">
+    <h2 id="coinSceneTitle">Round 1: Choose your coins</h2>
+    <p class="help">Press D/F/G to add coins. W/A to switch player. S to confirm selection. You need <strong id="coinsToPick">5</strong> coins.</p>
+    <div class="row">
+      <div class="card" style="flex:1;">
+        <h3>Current player</h3>
+        <div class="pill"><strong>#</strong><span id="currentPlayerIndex">1</span></div>
+        <div class="pill"><strong>Round</strong> <span id="roundNumber">1</span></div>
+        <div class="pill"><strong>Pick left</strong> <span id="pickLeft">5</span></div>
+        <div class="meter"><div id="pickMeter"></div></div>
+        <div class="note" style="margin-top:8px">Switch players with W/A; confirm with S.</div>
       </div>
-    </section>
-
-    <!-- Scene 2/6: Coin selection -->
-    <section id="scene2" class="scene">
-      <h2 id="coinSceneTitle">Round 1: Choose your coins</h2>
-      <p class="help">Press D/F/G to add coins. W/A to switch player. S to confirm selection. You need <strong id="coinsToPick">5</strong> coins.</p>
-      <div class="row">
-        <div class="card" style="flex:1;">
-          <h3>Current player</h3>
-          <div class="pill"><strong>#</strong><span id="currentPlayerIndex">1</span></div>
-          <div class="pill"><strong>Round</strong> <span id="roundNumber">1</span></div>
-          <div class="pill"><strong>Pick left</strong> <span id="pickLeft">5</span></div>
-          <div class="meter"><div id="pickMeter"></div></div>
-          <div style="margin-top:8px" class="note">Switch players with W/A; confirm with S.</div>
-        </div>
-        <div class="card" style="flex:1;">
-          <h3>Your coins</h3>
-          <div id="coinBag" class="row"></div>
-        </div>
+      <div class="card" style="flex:1;">
+        <h3>Your coins</h3>
+        <div id="coinBag" class="row"></div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- Scene 3: Food cards -->
-    <section id="scene3" class="scene">
-      <h2>Browse and buy food</h2>
-      <p class="help">Use W/A to scroll cards. Press S to open confirmation. Press Space when your shopping is complete.</p>
+  <!-- Scene 3: Shopping -->
+  <section id="scene3" class="scene">
+    <h2>Browse and buy food</h2>
+    <p class="help">Use W/A to scroll cards. Press S to open confirmation. Press Space when your shopping is complete.</p>
+    <div class="row">
       <div class="grid" id="foodGrid"></div>
-      <div class="row" style="margin-top:8px;">
-        <div class="card" style="flex:1;">
-          <h3>Selected card</h3>
-          <div id="selectedFoodDetails" class="note">Use W/A to select a card.</div>
-        </div>
-        <div class="card" style="flex:1;">
-          <h3>Your status</h3>
-          <div class="pill"><strong>Player</strong> <span id="shopPlayer">1</span></div>
-          <div class="pill"><strong>Food value</strong> <span id="shopFoodValue">0</span></div>
-          <div class="pill"><strong>Special</strong> <span id="shopSpecial">0</span></div>
-          <div id="shopCoins" class="row" style="margin-top:6px;"></div>
-        </div>
+      <div id="selectedFoodPanel" class="card" style="flex:1;">
+        <h3>Selected card</h3>
+        <div id="selectedFoodDetails" class="note">Use W/A to select a card.</div>
       </div>
-    </section>
-
-    <!-- Popup Scene 4: Confirm buy/defend/storage -->
-    <div id="confirmPopup" class="popup">
-      <div class="box">
-        <h3>Confirm action</h3>
-        <p id="confirmText">Buy this food?</p>
-        <div class="row">
-          <button class="btn secondary" id="optNah">Nah (W)</button>
-          <button class="btn ok" id="optYes">Yes (S)</button>
-          <button class="btn warn" id="optDef">Defend (A)</button>
-        </div>
-        <p class="note" style="margin-top:12px">
-          Defend makes food unavailable to others this round; you must buy it next round or face waste elimination. You gain a special coin immediately.
-        </p>
-        <hr>
-        <div class="row">
-          <button class="btn" id="optStore">Use special coin to store this food (1 round)</button>
-        </div>
+      <div class="card" style="flex:1;">
+        <h3>Your status</h3>
+        <div class="pill"><strong>Player</strong> <span id="shopPlayer">1</span></div>
+        <div class="pill"><strong>Food value</strong> <span id="shopFoodValue">0</span></div>
+        <div class="pill"><strong>Special</strong> <span id="shopSpecial">0</span></div>
+        <div id="shopCoins" class="row" style="margin-top:6px;"></div>
       </div>
     </div>
+  </section>
 
-    <!-- Popup Scene 4.5: Special coin notice -->
-    <div id="specialPopup" class="popup">
-      <div class="box">
-        <h3>Special coin added</h3>
-        <p>You’ve gained a special coin. It can replace any missing coin or store one food for next round.</p>
-        <div class="row"><button class="btn ok" id="specialOk">Continue</button></div>
+  <!-- Popup: Confirm -->
+  <div id="confirmPopup" class="popup">
+    <div class="box">
+      <h3>Confirm action</h3>
+      <p id="confirmText">Buy this food?</p>
+      <div class="row">
+        <button class="btn secondary" id="optNah">Nah (W)</button>
+        <button class="btn ok" id="optYes">Yes (S)</button>
+        <button class="btn warn" id="optDef">Defend (A)</button>
+      </div>
+      <p class="note" style="margin-top:12px">
+        Defend makes food unavailable to others this round; you must buy it next round or face waste elimination. You gain a special coin immediately.
+      </p>
+      <hr>
+      <div class="row">
+        <button class="btn" id="optStore">Use special coin to store this food (1 round)</button>
       </div>
     </div>
+  </div>
 
-    <!-- Scene 5: Status board -->
-    <section id="scene5" class="scene">
-      <h2>End of round status</h2>
-      <p class="help">Press S to continue.</p>
-      <div class="card">
-        <h3>Leaderboard</h3>
-        <table id="statusTable">
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th>Food value</th>
-              <th>Coins (R/Y/B/S)</th>
-              <th>Elimination</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <div id="elimMessages" class="note" style="margin-top:8px;"></div>
+  <!-- Popup: Special coin notice -->
+  <div id="specialPopup" class="popup">
+    <div class="box">
+      <h3>Special coin added</h3>
+      <p>You’ve gained a special coin. It can replace any missing coin or store one food for next round.</p>
+      <div class="row"><button class="btn ok" id="specialOk">Continue</button></div>
+    </div>
+  </div>
+
+  <!-- Scene 5: Status -->
+  <section id="scene5" class="scene">
+    <h2>End of round status</h2>
+    <p class="help">Press S to continue.</p>
+    <div class="card">
+      <h3>Leaderboard</h3>
+      <table id="statusTable">
+        <thead><tr><th>Player</th><th>Food value</th><th>Coins (R/Y/B/S)</th><th>Elimination</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div id="elimMessages" class="note" style="margin-top:8px;"></div>
+    </div>
+  </section>
+
+  <!-- Scene 7: Victory -->
+  <section id="scene7" class="scene">
+    <h2>Victory</h2>
+    <div class="card">
+      <h3>Winner</h3>
+      <p id="winnerText">Player #</p>
+      <div class="row"><button class="btn ok" id="playAgain">Play again</button></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Last Plate Standing • Use Makey Makey keys. Refresh to reset if needed.
+</footer>
+
+<script>
+// --- Game State ---
+const state = {
+  players: 2,
+  currentPlayer: 0,
+  round: 1,
+  coinsToPickStart: 5,
+  coinsToPickSubsequent: 3,
+  starvationBase: 6,
+  starvationGrowth: 2,
+  playersData: [], // [{coins:{R:0,Y:0,B:0,S:0}, foodValue:0, stored:[], defendedIds:[], alive:true, completed:false}]
+  foodCards: [],
+  selectionIndex: 0,
+  scene: 1,
+  _visited: null
+};
+
+// Sample food deck
+const baseFoodDeck = [
+  { id: 'milk', name: 'Milk', value: 2, cost: {R:1, Y:1, B:0} },
+  { id: 'bread', name: 'Bread', value: 3, cost: {R:0, Y:2, B:0} },
+  { id: 'rice', name: 'Rice', value: 3, cost: {R:0, Y:1, B:1} },
+  { id: 'vegetables', name: 'Vegetables', value: 4, cost: {R:1, Y:1, B:1} },
+  { id: 'eggs', name: 'Eggs', value: 4, cost: {R:2, Y:0, B:0} },
+  { id: 'fish', name: 'Fish', value: 5, cost: {R:0, Y:1, B:2} },
+  { id: 'poultry', name: 'Chicken', value: 5, cost: {R:2, Y:1, B:0} },
+  { id: 'steak', name: 'Steak', value: 6, cost: {R:3, Y:0, B:1} },
+  { id: 'fruit', name: 'Fruit', value: 3, cost: {R:0, Y:0, B:2} },
+  { id: 'legumes', name: 'Beans', value: 4, cost: {R:1, Y:0, B:1} },
+  { id: 'yogurt', name: 'Yogurt', value: 3, cost: {R:1, Y:1, B:0} },
+  { id: 'oil', name: 'Cooking Oil', value: 2, cost: {R:0, Y:2, B:0} }
+];
+
+// --- Utilities ---
+function initPlayers(n) {
+  state.playersData = Array.from({ length: n }, () => ({
+    coins: { R:0, Y:0, B:0, S:0 },
+    foodValue: 0,
+    stored: [],
+    defendedIds: [],
+    alive: true,
+    completed: false,
+    pickRound: 0
+  }));
+}
+
+function currentCoins() { return state.playersData[state.currentPlayer].coins; }
+function currentPlayerData() { return state.playersData[state.currentPlayer]; }
+function firstAliveIndex() { for (let i=0;i<state.players;i++){ if (state.playersData[i].alive) return i; } return 0; }
+function starvationThresholdForRound(r) { return state.starvationBase + state.starvationGrowth * (r-1); }
+
+function canAfford(cost, coins) {
+  let missingR = Math.max(0, cost.R - coins.R);
+  let missingY = Math.max(0, cost.Y - coins.Y);
+  let missingB = Math.max(0, cost.B - coins.B);
+  const totalMissing = missingR + missingY + missingB;
+  if (totalMissing === 0) return { ok: true, useSpecial: false };
+  if (totalMissing === 1 && coins.S > 0) return { ok: true, useSpecial: true };
+  return { ok: false, useSpecial: false };
+}
+
+function spendCoins(cost, coins, useSpecial) {
+  coins.R = Math.max(0, coins.R - cost.R);
+  coins.Y = Math.max(0, coins.Y - cost.Y);
+  coins.B = Math.max(0, coins.B - cost.B);
+  if (useSpecial) coins.S = Math.max(0, coins.S - 1);
+}
+
+function addSpecialCoin(playerIndex) {
+  state.playersData[playerIndex].coins.S += 1;
+}
+
+function showScene(id) {
+  state.scene = parseInt(id);
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('scene' + id);
+  if (el) el.classList.add('active');
+}
+
+function showPopup(id, show=true) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle('active', show);
+}
+
+// --- Scene 1 ---
+const playerCountEl = document.getElementById('playerCount');
+const playerMeterEl = document.getElementById('playerMeter');
+document.getElementById('prevPlayersBtn').addEventListener('click', () => changePlayers(-1));
+document.getElementById('nextPlayersBtn').addEventListener('click', () => changePlayers(+1));
+document.getElementById('confirmPlayersBtn').addEventListener('click', confirmPlayers);
+
+function changePlayers(delta) {
+  let p = state.players + delta;
+  if (p < 2) p = 2;
+  if (p > 8) p = 8;
+  state.players = p;
+  playerCountEl.textContent = p;
+  playerMeterEl.style.width = `${(p-2)/6 * 100}%`;
+}
+
+function confirmPlayers() {
+  initPlayers(state.players);
+  state.round = 1;
+  enterCoinSelection();
+}
+
+// --- Scene 2: Coin selection ---
+function enterCoinSelection() {
+  showScene(2);
+  document.getElementById('coinSceneTitle').textContent = `Round ${state.round}: Choose your coins`;
+  const toPick = state.round === 1 ? state.coinsToPickStart : state.coinsToPickSubsequent;
+  document.getElementById('coinsToPick').textContent = toPick;
+  state.playersData.forEach(p => { p.completed = false; p.pickRound = 0; });
+  state.currentPlayer = firstAliveIndex();
+  state._visited = new Set(); // track who has picked this phase
+  renderCoinSelection();
+}
+
+function renderCoinSelection() {
+  const toPick = state.round === 1 ? state.coinsToPickStart : state.coinsToPickSubsequent;
+  const picked = currentPickCountThisRound();
+  document.getElementById('currentPlayerIndex').textContent = state.currentPlayer + 1;
+  document.getElementById('roundNumber').textContent = state.round;
+  const left = Math.max(0, toPick - picked);
+  document.getElementById('pickLeft').textContent = left;
+  document.getElementById('pickMeter').style.width = `${(picked / toPick) * 100}%`;
+
+  const bag = document.getElementById('coinBag');
+  bag.innerHTML = '';
+  const c = currentCoins();
+  ['R','Y','B','S'].forEach(k => {
+    const pill = document.createElement('div');
+    pill.className = 'pill';
+    const dot = document.createElement('span');
+    dot.className = 'dot ' + (k==='R'?'red':k==='Y'?'yellow':k==='B'?'blue':'special');
+    pill.appendChild(dot);
+    const t = document.createElement('span');
+    t.textContent = `${k==='S'?'Special':'Coins'} ${k}: ${c[k]}`;
+    pill.appendChild(t);
+    bag.appendChild(pill);
+  });
+}
+
+function currentPickCountThisRound() {
+  return currentPlayerData().pickRound || 0;
+}
+
+function addCoinForCurrent(k) {
+  const toPick = state.round === 1 ? state.coinsToPickStart : state.coinsToPickSubsequent;
+  let picked = currentPickCountThisRound();
+  if (picked >= toPick) return;
+  currentCoins()[k] += 1;
+  currentPlayerData().pickRound = picked + 1;
+  renderCoinSelection();
+}
+
+function coinSelectionConfirm() {
+  const toPick = state.round === 1 ? state.coinsToPickStart : state.coinsToPickSubsequent;
+  const picked = currentPickCountThisRound();
+  if (picked < toPick) return; // must pick exact amount
+  currentPlayerData().pickRound = 0;
+  state._visited.add(state.currentPlayer);
+
+  // Advance to next alive player who hasn’t visited
+  let next = state.currentPlayer;
+  let moved = false;
+  do {
+    next = (next + 1) % state.players;
+    if (state.playersData[next].alive && !state._visited.has(next)) { moved = true; break; }
+  } while (next !== state.currentPlayer);
+
+  if (!moved) {
+    enterShopping();
+  } else {
+    state.currentPlayer = next;
+    renderCoinSelection();
+  }
+}
+
+// --- Scene 3: Shopping ---
+function enterShopping() {
+  state._visited = null;
+  showScene(3);
+  state.foodCards = baseFoodDeck.map(f => ({...f, reserved:false}));
+  state.selectionIndex = 0;
+  state.currentPlayer = firstAliveIndex();
+  state.playersData.forEach(p => p.completed = false);
+  renderScene3();
+}
+
+function updateSelection(delta) {
+  const available = state.foodCards.filter(fc => !fc.reserved);
+  if (available.length === 0) return;
+  state.selectionIndex = (state.selectionIndex + delta + available.length) % available.length;
+  renderScene3();
+}
+
+function renderScene3() {
+  const grid = document.getElementById('foodGrid');
+  grid.innerHTML = '';
+  const available = state.foodCards.filter(fc => !fc.reserved);
+
+  available.forEach((fc, idx) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.setAttribute('data-id', fc.id);
+    if (idx === state.selectionIndex) {
+      card.style.boxShadow = '0 0 0 3px rgba(33,158,188,0.4)';
+      // ensure selected card scrolls into view
+      setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0);
+    }
+    card.innerHTML = `
+      <h3>${fc.name}</h3>
+      <div class="pill"><strong>Value</strong> ${fc.value}</div>
+      <div class="row" style="margin-top:6px;">
+        <div class="pill"><span class="dot red"></span> R ${fc.cost.R}</div>
+        <div class="pill"><span class="dot yellow"></span> Y ${fc.cost.Y}</div>
+        <div class="pill"><span class="dot blue"></span> B ${fc.cost.B}</div>
       </div>
-    </section>
+      <div class="note" style="margin-top:6px;">Press S to confirm action</div>
+    `;
+    grid.appendChild(card);
+  });
 
-    <!-- Scene 7: Victory -->
-    <section id="scene7" class="scene">
-      <h2>Victory</h2>
-      <div class="card">
-        <h3>Winner</h3>
-        <p id="winnerText">Player #</p>
-        <div class="row">
-          <button class="btn ok" id="playAgain">Play again</button>
-        </div>
-      </div>
-    </section>
-  </main>
+  const sel = available[state.selectionIndex];
+  document.getElementById('selectedFoodDetails').textContent =
+    sel ? `${sel.name} — Value ${sel.value} — Cost R${sel.cost.R}/Y${sel.cost.Y}/B${sel.cost.B}` :
+    'No available food cards. Press Space to complete.';
 
-  <footer>
-    Last Plate Standing • Use Makey Makey keys. Refresh to reset if needed.
-  </footer>
+  const pd = currentPlayerData();
+  document.getElementById('shopPlayer').textContent = state.currentPlayer + 1;
+  document.getElementById('shopFoodValue').textContent = pd.foodValue;
+  document.getElementById('shopSpecial').textContent = pd.coins.S;
 
-  <script>
-    // --- Game State ---
-    const state = {
-      players: 2,
-      currentPlayer: 0,
-      round: 1,
-      coinsToPickStart: 5,
-      coinsToPickSubsequent: 3,
-      starvationBase: 6,    // hidden base threshold; increases each round
-      starvationGrowth: 2,  // per round increase
-      playersData: [],      // [{coins:{R:0,Y:0,B:0,S:0}, foodValue:0, stored:[], defendedIds:[], alive:true, completed:false}]
-      foodCards: [],
-      selectionIndex: 0,
-      scene: 1
-    };
+  const coinsEl = document.getElementById('shopCoins');
+  coinsEl.innerHTML = '';
+  ['R','Y','B','S'].forEach(k => {
+    const pill = document.createElement('div');
+    pill.className = 'pill';
+    const dot = document.createElement('span');
+    dot.className = 'dot ' + (k==='R'?'red':k==='Y'?'yellow':k==='B'?'blue':'special');
+    pill.appendChild(dot);
+    const t = document.createElement('span');
+    t.textContent = `${k}: ${pd.coins[k]}`;
+    pill.appendChild(t);
+    coinsEl.appendChild(pill);
+  });
+}
 
-    // Sample food deck (extend as needed)
-    const baseFoodDeck = [
-      { id: 'milk', name: 'Milk', value: 2, cost: {R:1, Y:1, B:0} },
-      { id: 'bread', name: 'Bread', value: 3, cost: {R:0, Y:2, B:0} },
-      { id: 'rice', name: 'Rice', value: 3, cost: {R:0, Y:1, B:1} },
-      { id: 'vegetables', name: 'Vegetables', value: 4, cost: {R:1, Y:1, B:1} },
-      { id: 'eggs', name: 'Eggs', value: 4, cost: {R:2, Y:0, B:0} },
-      { id: 'fish', name: 'Fish', value: 5, cost: {R:0, Y:1, B:2} },
-      { id: 'poultry', name: 'Chicken', value: 5, cost: {R:2, Y:1, B:0} },
-      { id: 'steak', name: 'Steak', value: 6, cost: {R:3, Y:0, B:1} },
-      { id: 'fruit', name: 'Fruit', value: 3, cost: {R:0, Y:0, B:2} },
-      { id: 'legumes', name: 'Beans', value: 4, cost: {R:1, Y:0, B:1} },
-      { id: 'yogurt', name: 'Yogurt', value: 3, cost: {R:1, Y:1, B:0} },
-      { id: 'oil', name: 'Cooking Oil', value: 2, cost: {R:0, Y:2, B:0} }
-    ];
+// Popup buttons
+document.getElementById('optNah').addEventListener('click', () => showPopup('confirmPopup', false));
+document.getElementById('optYes').addEventListener('click', buySelected);
+document.getElementById('optDef').addEventListener('click', defendSelected);
+document.getElementById('optStore').addEventListener('click', storeSelected);
+document.getElementById('specialOk').addEventListener('click', () => { showPopup('specialPopup', false); renderScene3(); });
 
-    // --- Utilities ---
-    function initPlayers(n) {
-      state.playersData = Array.from({ length: n }, () => ({
-        coins: { R:0, Y:0, B:0, S:0 }, // S = special
-        foodValue: 0,
-        stored: [],          // [{id, value}] delayed add next round
-        defendedIds: [],     // food ids reserved this round
-        alive: true,
-        completed: false
-      }));
+function getSelectedAvailable() {
+  return state.foodCards.filter(fc => !fc.reserved)[state.selectionIndex] || null;
+}
+
+function buySelected() {
+  const sel = getSelectedAvailable();
+  if (!sel) { showPopup('confirmPopup', false); return; }
+  const afford = canAfford(sel.cost, currentCoins());
+  if (!afford.ok) { alert('Not enough coins to buy this food (special coin can replace only one missing).'); return; }
+  spendCoins(sel.cost, currentCoins(), afford.useSpecial);
+  currentPlayerData().foodValue += sel.value;
+  const idx = state.foodCards.findIndex(fc => fc.id === sel.id);
+  state.foodCards.splice(idx,1);
+  showPopup('confirmPopup', false);
+  // adjust selection index
+  const availableCount = state.foodCards.filter(fc => !fc.reserved).length;
+  if (availableCount > 0) state.selectionIndex = Math.min(state.selectionIndex, availableCount-1);
+  else state.selectionIndex = 0;
+  renderScene3();
+}
+
+function defendSelected() {
+  const sel = getSelectedAvailable();
+  if (!sel) { showPopup('confirmPopup', false); return; }
+  const deckIdx = state.foodCards.findIndex(fc => fc.id === sel.id);
+  state.foodCards[deckIdx].reserved = true;
+  currentPlayerData().defendedIds.push(sel.id);
+  addSpecialCoin(state.currentPlayer);
+  showPopup('confirmPopup', false);
+  showPopup('specialPopup', true);
+}
+
+function storeSelected() {
+  const sel = getSelectedAvailable();
+  if (!sel) { showPopup('confirmPopup', false); return; }
+  if (currentCoins().S <= 0) { alert('You need a special coin to store food for next round.'); return; }
+  currentCoins().S -= 1;
+  currentPlayerData().stored.push({ id: sel.id, value: sel.value });
+  const idx = state.foodCards.findIndex(fc => fc.id === sel.id);
+  state.foodCards.splice(idx,1);
+  showPopup('confirmPopup', false);
+  const availableCount = state.foodCards.filter(fc => !fc.reserved).length;
+  if (availableCount > 0) state.selectionIndex = Math.min(state.selectionIndex, availableCount-1);
+  else state.selectionIndex = 0;
+  renderScene3();
+}
+
+// --- Scene 5: Status board ---
+function enterStatus() {
+  showScene(5);
+  const tbody = document.querySelector('#statusTable tbody');
+  tbody.innerHTML = '';
+
+  const threshold = starvationThresholdForRound(state.round);
+
+  const alivePlayers = state.playersData.map((p,i) => ({...p, index:i})).filter(p => p.alive);
+  const nonStarving = alivePlayers.filter(p => p.foodValue >= threshold);
+
+  // award special coin to lowest non-starving
+  let awardIndex = null;
+  if (nonStarving.length > 0) {
+    const minVal = Math.min(...nonStarving.map(p => p.foodValue));
+    awardIndex = nonStarving.find(p => p.foodValue === minVal).index;
+    addSpecialCoin(awardIndex);
+  }
+
+  // waste rule (disabled for 2 players)
+  let wasteIndex = null;
+  if (alivePlayers.length > 2) {
+    const maxVal = Math.max(...alivePlayers.map(p => p.foodValue));
+    const tops = alivePlayers.filter(p => p.foodValue === maxVal);
+    if (tops.length === 1) wasteIndex = tops[0].index;
+  }
+
+  const starvedIndices = alivePlayers.filter(p => p.foodValue < threshold).map(p => p.index);
+  const eliminated = new Set([...starvedIndices]);
+  if (wasteIndex !== null) eliminated.add(wasteIndex);
+
+  const msgs = [];
+  state.playersData.forEach((p, i) => {
+    const tr = document.createElement('tr');
+    const elim = eliminated.has(i) ? (starvedIndices.includes(i) ? 'Starved' : 'Wasteful') : '';
+    tr.innerHTML = `
+      <td>Player ${i+1}${p.alive ? '' : ' (eliminated)'}</td>
+      <td>${p.foodValue}</td>
+      <td>${p.coins.R}/${p.coins.Y}/${p.coins.B}/${p.coins.S}</td>
+      <td style="color:${elim ? (elim==='Starved'? 'var(--warn)':'var(--red)') : 'inherit'}">${elim}</td>
+    `;
+    tbody.appendChild(tr);
+    if (elim) msgs.push(`Player ${i+1} eliminated: ${elim}.`);
+  });
+  if (awardIndex !== null) msgs.push(`Player ${awardIndex+1} gains a special coin for lowest non-starving total.`);
+  document.getElementById('elimMessages').textContent = msgs.length ? msgs.join(' ') : 'No eliminations this round.';
+
+  // apply eliminations
+  eliminated.forEach(i => state.playersData[i].alive = false);
+
+  // reset per-round food
+  state.playersData.forEach(p => { p.foodValue = 0; p.defendedIds = []; });
+
+  // advance round
+  state.round += 1;
+
+  const aliveCount = state.playersData.filter(p => p.alive).length;
+  if (aliveCount <= 1) {
+    const winnerIdx = state.playersData.findIndex(p => p.alive);
+    enterVictory(winnerIdx);
+  }
+}
+
+// --- Scene 7: Victory ---
+function enterVictory(winnerIdx) {
+  showScene(7);
+  const text = winnerIdx >= 0 ? `Player ${winnerIdx+1}` : 'No winner';
+  document.getElementById('winnerText').textContent = text;
+}
+
+document.getElementById('playAgain').addEventListener('click', () => {
+  state.players = 2;
+  state.currentPlayer = 0;
+  state.round = 1;
+  state.playersData = [];
+  state.foodCards = [];
+  state.selectionIndex = 0;
+  state._visited = null;
+  playerCountEl.textContent = '2';
+  playerMeterEl.style.width = '0%';
+  showScene(1);
+});
+
+// --- Key bindings ---
+document.addEventListener('keydown', (e) => {
+  const key = e.key.toLowerCase();
+
+  // confirm popup
+  if (document.getElementById('confirmPopup').classList.contains('active')) {
+    if (key === 'w') showPopup('confirmPopup', false);
+    if (key === 's') { buySelected(); }
+    if (key === 'a') { defendSelected(); }
+    return;
+  }
+
+  // special popup
+  if (document.getElementById('specialPopup').classList.contains('active')) {
+    if (key === 's') { showPopup('specialPopup', false); renderScene3(); }
+    return;
+  }
+
+  // Scene 1
+  if (state.scene === 1) {
+    if (key === 'w') changePlayers(-1);
+    if (key === 'a') changePlayers(+1);
+    if (key === 's') confirmPlayers();
+    return;
+  }
+
+  // Scene 2: coin selection
+  if (state.scene === 2) {
+    if (key === 'd') addCoinForCurrent('R');
+    if (key === 'f') addCoinForCurrent('Y');
+    if (key === 'g') addCoinForCurrent('B');
+    if (key === 'w') {
+      let prev = state.currentPlayer;
+      do { prev = (prev - 1 + state.players) % state.players; }
+      while (!state.playersData[prev].alive);
+      state.currentPlayer = prev;
+      renderCoinSelection();
     }
-
-    function currentCoins() {
-      return state.playersData[state.currentPlayer].coins;
+    if (key === 'a') {
+      let next = state.currentPlayer;
+      do { next = (next + 1) % state.players; }
+      while (!state.playersData[next].alive);
+      state.currentPlayer = next;
+      renderCoinSelection();
     }
-    function currentPlayerData() {
-      return state.playersData[state.currentPlayer];
-    }
+    if (key === 's') coinSelectionConfirm();
+    return;
+  }
 
-    function starvationThresholdForRound(r) {
-      return state.starvationBase + state.starvationGrowth * (r-1);
+  // Scene 3: shopping
+  if (state.scene === 3) {
+    if (key === 'w') updateSelection(-1);
+    if (key === 'a') updateSelection(+1);
+    if (key === 's') {
+      const sel = getSelectedAvailable();
+      if (!sel) return;
+      document.getElementById('confirmText').textContent =
+        `Buy ${sel.name}? Value ${sel.value} (R${sel.cost.R}/Y${sel.cost.Y}/B${sel.cost.B})`;
+      showPopup('confirmPopup', true);
     }
+    if (key === ' ') {
+      currentPlayerData().completed = true;
 
-    function canAfford(cost, coins) {
-      // Allow special coin S to replace ANY single missing coin (only one S per purchase)
-      let missingR = Math.max(0, cost.R - coins.R);
-      let missingY = Math.max(0, cost.Y - coins.Y);
-      let missingB = Math.max(0, cost.B - coins.B);
-      const totalMissing = missingR + missingY + missingB;
-      if (totalMissing === 0) return { ok: true, useSpecial: false };
-      if (totalMissing === 1 && coins.S > 0) return { ok: true, useSpecial: true };
-      return { ok: false, useSpecial: false };
+      // check all done BEFORE trying to advance to avoid freeze
+      const allDone = state.playersData.every(p => !p.alive || p.completed);
+      if (allDone) {
+        enterStatus();
+      } else {
+        // go to next alive & not completed player
+        let next = state.currentPlayer;
+        do {
+          next = (next + 1) % state.players;
+        } while (!state.playersData[next].alive || state.playersData[next].completed);
+        state.currentPlayer = next;
+        renderScene3();
+      }
     }
+    return;
+  }
 
-    function spendCoins(cost, coins, useSpecial) {
-      coins.R = Math.max(0, coins.R - cost.R);
-      coins.Y = Math.max(0, coins.Y - cost.Y);
-      coins.B = Math.max(0, coins.B - cost.B);
-      if (useSpecial) coins.S = Math.max(0, coins.S - 1);
-    }
-
-    function addSpecialCoin(playerIndex) {
-      state.playersData[playerIndex].coins.S += 1;
-    }
-
-    function updateSelection(delta) {
-      const available = state.foodCards.filter(fc => !fc.reserved);
-      if (available.length === 0) return;
-      state.selectionIndex = (state.selectionIndex + delta + available.length) % available.length;
-      renderScene3();
-    }
-
-    // --- Rendering helpers ---
-    function showScene(id) {
-      state.scene = parseInt(id);
-      document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
-      const el = document.getElementById('scene' + id);
-      if (el) el.classList.add('active');
-    }
-    function showPopup(id, show=true) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.classList.toggle('active', show);
-    }
-
-    // --- Scene 1 ---
-    const playerCountEl = document.getElementById('playerCount');
-    const playerMeterEl = document.getElementById('playerMeter');
-    document.getElementById('prevPlayersBtn').addEventListener('click', () => changePlayers(-1));
-    document.getElementById('nextPlayersBtn').addEventListener('click', () => changePlayers(+1));
-    document.getElementById('confirmPlayersBtn').addEventListener('click', confirmPlayers);
-
-    function changePlayers(delta) {
-      let p = state.players + delta;
-      if (p < 2) p = 2;
-      if (p > 8) p = 8;
-      state.players = p;
-      playerCountEl.textContent = p;
-      playerMeterEl.style.width = `${(p-2)/6 * 100}%`;
-    }
-
-    function confirmPlayers() {
-      initPlayers(state.players);
-      state.round = 1;
+  // Scene 5: status
+  if (state.scene === 5) {
+    if (key === 's') {
+      // apply stored food now (start of next round)
+      state.playersData.forEach(p => {
+        if (!p.alive) return;
+        const sumStored = p.stored.reduce((acc, it) => acc + it.value, 0);
+        p.foodValue += sumStored;
+        p.stored = [];
+      });
       enterCoinSelection();
     }
+    return;
+  }
 
-    // --- Enter coin selection scene (2/6) ---
-    function enterCoinSelection() {
-      showScene(2);
-      document.getElementById('coinSceneTitle').textContent =
-        `Round ${state.round}: Choose your coins`;
-      const toPick = state.round === 1 ? state.coinsToPickStart : state.coinsToPickSubsequent;
-      document.getElementById('coinsToPick').textContent = toPick;
-      state.playersData.forEach(p => p.completed = false); // reset completion flag at coin phase
-      state.currentPlayer = firstAliveIndex();
-      renderCoinSelection();
-    }
+  // Scene 7: victory (buttons only)
+});
 
-    function renderCoinSelection() {
-      const toPick = state.round === 1 ? state.coinsToPickStart : state.coinsToPickSubsequent;
-      const picked = currentPickCountThisRound();
-      document.getElementById('currentPlayerIndex').textContent = state.currentPlayer + 1;
-      document.getElementById('roundNumber').textContent = state.round;
-      const left = Math.max(0, toPick - picked);
-      document.getElementById('pickLeft').textContent = left;
-      document.getElementById('pickMeter').style.width = `${(picked / toPick) * 100}%`;
-
-      // coin bag display
-      const bag = document.getElementById('coinBag');
-      bag.innerHTML = '';
-      const c = currentCoins();
-      ['R','Y','B','S'].forEach(k => {
-        const pill = document.createElement('div');
-        pill.className = 'pill';
-        const dot = document.createElement('span');
-        dot.className = 'dot ' + (k==='R'?'red':k==='Y'?'yellow':k==='B'?'blue':'special');
-        pill.appendChild(dot);
-        const t = document.createElement('span');
-        t.textContent = `${k==='S'?'Special':'Coins'} ${k}: ${c[k]}`;
-        pill.appendChild(t);
-        bag.appendChild(pill);
-      });
-    }
-
-    // Track per-round picks
-    function currentPickCountThisRound() {
-      if (!currentPlayerData().pickRound) currentPlayerData().pickRound = 0;
-      return currentPlayerData().pickRound;
-    }
-    function addCoinForCurrent(k) {
-      const toPick = state.round === 1 ? state.coinsToPickStart : state.coinsToPickSubsequent;
-      let picked = currentPickCountThisRound();
-      if (picked >= toPick) return;
-      currentCoins()[k] += 1;
-      currentPlayerData().pickRound = picked + 1;
-      renderCoinSelection();
-    }
-    function coinSelectionConfirm() {
-      const toPick = state.round === 1 ? state.coinsToPickStart : state.coinsToPickSubsequent;
-      const picked = currentPickCountThisRound();
-      if (picked < toPick) return; // must pick exact amount
-      currentPlayerData().pickRound = 0; // reset
-      // Advance player
-      advancePlayerToNextAlive();
-      // If all players completed coin selection, enter shopping
-      if (allPlayersVisitedThisPhase()) {
-        enterShopping();
-      } else {
-        renderCoinSelection();
-      }
-    }
-    function advancePlayerToNextAlive() {
-      let next = state.currentPlayer;
-      do {
-        next = (next + 1) % state.players;
-      } while (!state.playersData[next].alive);
-      state.currentPlayer = next;
-    }
-    function allPlayersVisitedThisPhase() {
-      if (!state._visited) state._visited = new Set();
-      state._visited.add(state.currentPlayer);
-      const aliveIdx = state.playersData
-        .map((p,i) => p.alive ? i : null)
-        .filter(i => i !== null);
-      return aliveIdx.every(i => state._visited.has(i)) && state._visited.size === aliveIdx.length;
-    }
-
-    // --- Scene 3: Shopping ---
-    function enterShopping() {
-      state._visited = null;
-      showScene(3);
-      // Prepare food deck for this round
-      state.foodCards = baseFoodDeck.map(f => ({...f, reserved:false}));
-      state.selectionIndex = 0;
-      state.currentPlayer = firstAliveIndex();
-      renderScene3();
-    }
-    function firstAliveIndex() {
-      for (let i=0;i<state.players;i++) {
-        if (state.playersData[i].alive) return i;
-      }
-      return 0;
-    }
-
-    function renderScene3() {
-      const grid = document.getElementById('foodGrid');
-      grid.innerHTML = '';
-      const available = state.foodCards.filter(fc => !fc.reserved);
-      available.forEach((fc, idx) => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        if (idx === state.selectionIndex) card.style.boxShadow = '0 0 0 3px rgba(33,158,188,0.4)';
-        card.innerHTML = `
-          <h3>${fc.name}</h3>
-          <div class="pill"><strong>Value</strong> ${fc.value}</div>
-          <div class="row" style="margin-top:6px;">
-            <div class="pill"><span class="dot red"></span> R ${fc.cost.R}</div>
-            <div class="pill"><span class="dot yellow"></span> Y ${fc.cost.Y}</div>
-            <div class="pill"><span class="dot blue"></span> B ${fc.cost.B}</div>
-          </div>
-          <div class="note" style="margin-top:6px;">Press S to confirm action</div>
-        `;
-        grid.appendChild(card);
-      });
-
-      // Selected details
-      const sel = available[state.selectionIndex];
-      document.getElementById('selectedFoodDetails').textContent =
-        sel ? `${sel.name} — Value ${sel.value} — Cost R${sel.cost.R}/Y${sel.cost.Y}/B${sel.cost.B}` :
-        'No available food cards. Press Space to complete.';
-      // Player status
-      const pd = currentPlayerData();
-      document.getElementById('shopPlayer').textContent = state.currentPlayer + 1;
-      document.getElementById('shopFoodValue').textContent = pd.foodValue;
-      document.getElementById('shopSpecial').textContent = pd.coins.S;
-      const coinsEl = document.getElementById('shopCoins');
-      coinsEl.innerHTML = '';
-      ['R','Y','B','S'].forEach(k => {
-        const pill = document.createElement('div');
-        pill.className = 'pill';
-        const dot = document.createElement('span');
-        dot.className = 'dot ' + (k==='R'?'red':k==='Y'?'yellow':k==='B'?'blue':'special');
-        pill.appendChild(dot);
-        const t = document.createElement('span');
-        t.textContent = `${k}: ${pd.coins[k]}`;
-        pill.appendChild(t);
-        coinsEl.appendChild(pill);
-      });
-    }
-
-    // Confirm popup actions (mouse)
-    document.getElementById('optNah').addEventListener('click', () => {
-      showPopup('confirmPopup', false);
-    });
-    document.getElementById('optYes').addEventListener('click', () => {
-      const sel = state.foodCards.filter(fc => !fc.reserved)[state.selectionIndex];
-      if (!sel) { showPopup('confirmPopup', false); return; }
-      const afford = canAfford(sel.cost, currentCoins());
-      if (!afford.ok) {
-        alert('Not enough coins to buy this food (special coin can replace only one missing).');
-        return;
-      }
-      spendCoins(sel.cost, currentCoins(), afford.useSpecial);
-      currentPlayerData().foodValue += sel.value;
-      const idx = state.foodCards.findIndex(fc => fc.id === sel.id);
-      state.foodCards.splice(idx,1);
-      showPopup('confirmPopup', false);
-      renderScene3();
-    });
-    document.getElementById('optDef').addEventListener('click', () => {
-      const sel = state.foodCards.filter(fc => !fc.reserved)[state.selectionIndex];
-      if (!sel) { showPopup('confirmPopup', false); return; }
-      const deckIdx = state.foodCards.findIndex(fc => fc.id === sel.id);
-      state.foodCards[deckIdx].reserved = true;
-      currentPlayerData().defendedIds.push(sel.id);
-      addSpecialCoin(state.currentPlayer);
-      showPopup('confirmPopup', false);
-      showPopup('specialPopup', true);
-    });
-    document.getElementById('optStore').addEventListener('click', () => {
-      const sel = state.foodCards.filter(fc => !fc.reserved)[state.selectionIndex];
-      if (!sel) { showPopup('confirmPopup', false); return; }
-      if (currentCoins().S <= 0) {
-        alert('You need a special coin to store food for next round.');
-        return;
-      }
-      currentCoins().S -= 1;
-      currentPlayerData().stored.push({ id: sel.id, value: sel.value });
-      const idx = state.foodCards.findIndex(fc => fc.id === sel.id);
-      state.foodCards.splice(idx,1);
-      showPopup('confirmPopup', false);
-      renderScene3();
-    });
-
-    document.getElementById('specialOk').addEventListener('click', () => {
-      showPopup('specialPopup', false);
-      renderScene3();
-    });
-
-    // --- Scene 5: Status board ---
-    function enterStatus() {
-      showScene(5);
-      const tbody = document.querySelector('#statusTable tbody');
-      tbody.innerHTML = '';
-      const threshold = starvationThresholdForRound(state.round);
-
-      // Determine special coin for lowest non-starving total
-      const alivePlayers = state.playersData
-        .map((p,i) => ({...p, index:i}))
-        .filter(p => p.alive);
-      const nonStarving = alivePlayers.filter(p => p.foodValue >= threshold);
-      let awardIndex = null;
-      if (nonStarving.length > 0) {
-        const minVal = Math.min(...nonStarving.map(p => p.foodValue));
-        awardIndex = nonStarving.find(p => p.foodValue === minVal).index;
-        addSpecialCoin(awardIndex);
-      }
-
-      // Waste rule (disabled for 2 players)
-      let wasteIndex = null;
-      if (alivePlayers.length > 2) {
-        const maxVal = Math.max(...alivePlayers.map(p => p.foodValue));
-        const tops = alivePlayers.filter(p => p.foodValue === maxVal);
-        if (tops.length === 1) wasteIndex = tops[0].index;
-      }
-
-      // Starvation eliminations
-      const starvedIndices = alivePlayers
-        .filter(p => p.foodValue < threshold)
-        .map(p => p.index);
-
-      const eliminated = new Set([...starvedIndices]);
-      if (wasteIndex !== null) eliminated.add(wasteIndex);
-
-      const msgs = [];
-      state.playersData.forEach((p, i) => {
-        const tr = document.createElement('tr');
-        const elim = eliminated.has(i) ? (starvedIndices.includes(i) ? 'Starved' : 'Wasteful') : '';
-        tr.innerHTML = `
-          <td>Player ${i+1}${p.alive ? '' : ' (eliminated)'}</td>
-          <td>${p.foodValue}</td>
-          <td>${p.coins.R}/${p.coins.Y}/${p.coins.B}/${p.coins.S}</td>
-          <td style="color:${elim ? (elim==='Starved'? 'var(--warn)':'var(--red)') : 'inherit'}">${elim}</td>
-        `;
-        tbody.appendChild(tr);
-        if (elim) msgs.push(`Player ${i+1} eliminated: ${elim}.`);
-      });
-
-      if (awardIndex !== null) msgs.push(`Player ${awardIndex+1} gains a special coin for lowest non-starving total.`);
-
-      document.getElementById('elimMessages').textContent =
-        msgs.length ? msgs.join(' ') : 'No eliminations this round.';
-
-      // Apply eliminations
-      eliminated.forEach(i => state.playersData[i].alive = false);
-
-      // Reset per-round food (doesn’t carry over)
-      state.playersData.forEach(p => {
-        p.foodValue = 0;
-      });
-
-      // Advance round number
-      state.round += 1;
-
-      // If game ended
-      const aliveCount = state.playersData.filter(p => p.alive).length;
-      if (aliveCount <= 1) {
-        const winnerIdx = state.playersData.findIndex(p => p.alive);
-        enterVictory(winnerIdx);
-      }
-    }
-
-    // --- Scene 7: Victory ---
-    function enterVictory(winnerIdx) {
-      showScene(7);
-      const text = winnerIdx >= 0 ? `Player ${winnerIdx+1}` : 'No winner';
-      document.getElementById('winnerText').textContent = text;
-    }
-    document.getElementById('playAgain').addEventListener('click', () => {
-      // Reset everything
-      state.players = 2;
-      state.currentPlayer = 0;
-      state.round = 1;
-      state.playersData = [];
-      state.foodCards = [];
-      state.selectionIndex = 0;
-      state._visited = null;
-      playerCountEl.textContent = '2';
-      playerMeterEl.style.width = '0%';
-      showScene(1);
-    });
-
-    // --- Key bindings (Makey Makey) ---
-    document.addEventListener('keydown', (e) => {
-      const key = e.key.toLowerCase();
-
-      // --- Handle confirm popup keys first ---
-      if (document.getElementById('confirmPopup').classList.contains('active')) {
-        if (key === 'w') {
-          showPopup('confirmPopup', false); // Nah
-        }
-        if (key === 's') {
-          // Yes
-          const sel = state.foodCards.filter(fc => !fc.reserved)[state.selectionIndex];
-          if (sel) {
-            const afford = canAfford(sel.cost, currentCoins());
-            if (afford.ok) {
-              spendCoins(sel.cost, currentCoins(), afford.useSpecial);
-              currentPlayerData().foodValue += sel.value;
-              const idx = state.foodCards.findIndex(fc => fc.id === sel.id);
-              state.foodCards.splice(idx,1);
-            } else {
-              alert('Not enough coins to buy this food (special coin replaces only one).');
-            }
-          }
-          showPopup('confirmPopup', false);
-          renderScene3();
-        }
-        if (key === 'a') {
-          // Defend
-          const sel = state.foodCards.filter(fc => !fc.reserved)[state.selectionIndex];
-          if (sel) {
-            const deckIdx = state.foodCards.findIndex(fc => fc.id === sel.id);
-            state.foodCards[deckIdx].reserved = true;
-            currentPlayerData().defendedIds.push(sel.id);
-            addSpecialCoin(state.currentPlayer);
-            showPopup('confirmPopup', false);
-            showPopup('specialPopup', true);
-          }
-        }
-        return; // stop here so background scene doesn’t react
-      }
-
-      // --- Handle special popup keys ---
-      if (document.getElementById('specialPopup').classList.contains('active')) {
-        if (key === 's') {
-          showPopup('specialPopup', false);
-          renderScene3();
-        }
-        return;
-      }
-
-      // --- Scene 1: Choose players ---
-      if (state.scene === 1) {
-        if (key === 'w') changePlayers(-1);
-        if (key === 'a') changePlayers(+1);
-        if (key === 's') confirmPlayers();
-        return;
-      }
-
-      // --- Scene 2: Coin selection ---
-      if (state.scene === 2) {
-        if (key === 'd') addCoinForCurrent('R');
-        if (key === 'f') addCoinForCurrent('Y');
-        if (key === 'g') addCoinForCurrent('B');
-        if (key === 'w') {
-          let prev = state.currentPlayer;
-          do {
-            prev = (prev - 1 + state.players) % state.players;
-          } while (!state.playersData[prev].alive);
-          state.currentPlayer = prev;
-          renderCoinSelection();
-        }
-        if (key === 'a') {
-          advancePlayerToNextAlive();
-          renderCoinSelection();
-        }
-        if (key === 's') coinSelectionConfirm();
-        return;
-      }
-
-      // --- Scene 3: Shopping ---
-      if (state.scene === 3) {
-        if (key === 'w') updateSelection(-1);
-        if (key === 'a') updateSelection(+1);
-        if (key === 's') {
-          const sel = state.foodCards.filter(fc => !fc.reserved)[state.selectionIndex];
-          if (!sel) return;
-          document.getElementById('confirmText').textContent =
-            `Buy ${sel.name}? Value ${sel.value} (R${sel.cost.R}/Y${sel.cost.Y}/B${sel.cost.B})`;
-          showPopup('confirmPopup', true);
-        }
-        if (key === ' ') {
-          currentPlayerData().completed = true;
-          let next = state.currentPlayer;
-          do {
-            next = (next + 1) % state.players;
-          } while (!state.playersData[next].alive || state.playersData[next].completed);
-          const allDone = state.playersData.every(p => !p.alive || p.completed);
-          if (allDone) {
-            enterStatus();
-          } else {
-            state.currentPlayer = next;
-            renderScene3();
-          }
-        }
-        return;
-      }
-
-      // --- Scene 5: Status board ---
-      if (state.scene === 5) {
-        if (key === 's') {
-          state.playersData.forEach(p => {
-            if (!p.alive) return;
-            const sumStored = p.stored.reduce((acc, it) => acc + it.value, 0);
-            p.foodValue += sumStored;
-            p.stored = [];
-          });
-          enterCoinSelection();
-        }
-        return;
-      }
-
-      // --- Scene 7: Victory ---
-      if (state.scene === 7) {
-        // handled by button
-        return;
-      }
-    });
-
-    // Initialize page
-    changePlayers(0);
-  </script>
+// Initialize page
+changePlayers(0);
+</script>
 </body>
 </html>
