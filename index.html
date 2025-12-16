@@ -712,7 +712,7 @@ document.getElementById('specialOk').addEventListener('click', () => {
 });
 
 // --- Scene 5: Status board (enhanced) ---
-function enterStatus() {
+ffunction enterStatus() {
   showScene(5);
 
   const tbody = document.querySelector('#statusTable tbody');
@@ -754,21 +754,21 @@ function enterStatus() {
     if (idx === 0) tr.classList.add('cutline'); // cut line after top player
   });
 
+  // Messages summary
+  const msgs = [];
+  if (sortedAlive.length > 0) msgs.push(`Player ${sortedAlive[0].index+1} eliminated: Waste.`);
+  sortedAlive.forEach(p => { if (p.foodValue < threshold) msgs.push(`Player ${p.index+1} eliminated: Starved.`); });
+  document.getElementById('elimMessages').textContent = msgs.length ? msgs.join(' ') : 'No eliminations this round.';
+
   // Apply eliminations
   eliminated.forEach(i => state.playersData[i].alive = false);
 
-  // Reset per-round food
+  // Reset per-round food (doesn’t carry over)
   state.playersData.forEach(p => { p.foodValue = 0; p.defendedIds = []; });
 
-  // Advance round
-  state.round++;
-
-  // Victory check
-  const aliveCount = state.playersData.filter(p => p.alive).length;
-  if (aliveCount <= 1) {
-    const winnerIdx = state.playersData.findIndex(p => p.alive);
-    enterVictory(winnerIdx);
-  }
+  // Advance round number
+  state.round += 1;
+}
 }
 
 // --- Scene 7: Victory ---
