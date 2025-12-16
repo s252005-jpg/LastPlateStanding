@@ -2,13 +2,9 @@
 <html lang="en">
 
 <head>
-
 <meta charset="UTF-8">
-
 <title>Last Plate Standing</title>
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 :root {
   /* Happy palette */
@@ -230,23 +226,25 @@ footer {
   padding: 14px 0 24px;
 }
 
-/* Sticky selected panel to avoid confusion */
+/* Sticky panels */
 #selectedFoodPanel {
   position: sticky;
   top: 20px;
   align-self: flex-start;
 }
+#yourStatusPanel {
+  position: sticky;
+  top: 20px;
+  align-self: flex-start;
+}
 
-/* Visuals for status board */
+/* Status board visuals */
 .cross { color: var(--red); font-weight: 700; }
 .cutline { border-top: 2px solid var(--warn); }
-
 </style>
-
 </head>
 
 <body>
-
 <header>
   <h1>Last Plate Standing</h1>
   <div class="keys">
@@ -257,139 +255,137 @@ footer {
 </header>
 
 <main>
-
-<!-- Scene 1: Choose players -->
-<section id="scene1" class="scene active">
-  <h2>Choose number of players</h2>
-  <p class="help">Use W/A to change the number. Press S to confirm. Minimum 2 players.</p>
-  <div class="row">
-    <div class="card">
-      <div class="pill"><strong>Players:</strong> <span id="playerCount">2</span></div>
-      <div class="meter"><div id="playerMeter"></div></div>
-      <div class="bar">
-        <button class="btn secondary" id="prevPlayersBtn">Prev (W)</button>
-        <button class="btn secondary" id="nextPlayersBtn">Next (A)</button>
-        <button class="btn ok" id="confirmPlayersBtn">Ok (S)</button>
+  <!-- Scene 1: Choose players -->
+  <section id="scene1" class="scene active">
+    <h2>Choose number of players</h2>
+    <p class="help">Use W/A to change the number. Press S to confirm. Minimum 2 players.</p>
+    <div class="row">
+      <div class="card">
+        <div class="pill"><strong>Players:</strong> <span id="playerCount">2</span></div>
+        <div class="meter"><div id="playerMeter"></div></div>
+        <div class="bar">
+          <button class="btn secondary" id="prevPlayersBtn">Prev (W)</button>
+          <button class="btn secondary" id="nextPlayersBtn">Next (A)</button>
+          <button class="btn ok" id="confirmPlayersBtn">Ok (S)</button>
+        </div>
+      </div>
+      <div class="card" style="flex:2;">
+        <h3>Game goal</h3>
+        <p>Balance your food value each round—too little and you starve, too much and you waste. Only balance wins.</p>
+        <ul>
+          <li><span class="pill"><span class="dot red"></span> Red</span>, <span class="pill"><span class="dot yellow"></span> Yellow</span>, <span class="pill"><span class="dot blue"></span> Blue</span> coins</li>
+          <li><span class="pill"><span class="dot special"></span> Special coin</span> replaces any coin or stores one food for next round.</li>
+          <li>Coins carry over; food doesn’t unless stored.</li>
+          <li>Starvation threshold is hidden and rises each round.</li>
+        </ul>
       </div>
     </div>
-    <div class="card" style="flex:2;">
-      <h3>Game goal</h3>
-      <p>Balance your food value each round—too little and you starve, too much and you waste. Only balance wins.</p>
-      <ul>
-        <li><span class="pill"><span class="dot red"></span> Red</span>, <span class="pill"><span class="dot yellow"></span> Yellow</span>, <span class="pill"><span class="dot blue"></span> Blue</span> coins</li>
-        <li><span class="pill"><span class="dot special"></span> Special coin</span> replaces any coin or stores one food for next round.</li>
-        <li>Coins carry over; food doesn’t unless stored.</li>
-        <li>Starvation threshold is hidden and rises each round.</li>
-      </ul>
-    </div>
-  </div>
-</section>
+  </section>
 
-<!-- Scene 2/6: Coin selection -->
-<section id="scene2" class="scene">
-  <h2 id="coinSceneTitle">Round 1: Choose your coins</h2>
-  <p class="help">Press D/F/G to add coins. W/A to switch player. S to confirm selection. You need <strong id="coinsToPick">5</strong> coins.</p>
-  <div class="row">
-    <div class="card" style="flex:1;">
-      <h3>Current player</h3>
-      <div class="pill"><strong>#</strong><span id="currentPlayerIndex">1</span></div>
-      <div class="pill"><strong>Round</strong> <span id="roundNumber">1</span></div>
-      <div class="pill"><strong>Pick left</strong> <span id="pickLeft">5</span></div>
-      <div class="meter"><div id="pickMeter"></div></div>
-      <div style="margin-top:8px" class="note">Switch players with W/A; confirm with S.</div>
-    </div>
-    <div class="card" style="flex:1;">
-      <h3>Your coins</h3>
-      <div id="coinBag" class="row"></div>
-    </div>
-  </div>
-</section>
-
-<!-- Scene 3: Food cards -->
-<section id="scene3" class="scene">
-  <h2>Browse and buy food</h2>
-  <p class="help">Use W/A to scroll cards. Press S to open confirmation. Press Space when your shopping is complete.</p>
-
-  <div class="grid" id="foodGrid"></div>
-
-  <div class="row" style="margin-top:8px;">
-    <div id="selectedFoodPanel" class="card" style="flex:1;">
-      <h3>Selected card</h3>
-      <div id="selectedFoodDetails" class="note">Use W/A to select a card.</div>
-    </div>
-
-    <div class="card" style="flex:1;">
-      <h3>Your status</h3>
-      <div class="pill"><strong>Player</strong> <span id="shopPlayer">1</span></div>
-      <div class="pill"><strong>Food value</strong> <span id="shopFoodValue">0</span></div>
-      <div class="pill"><strong>Special</strong> <span id="shopSpecial">0</span></div>
-      <div id="shopCoins" class="row" style="margin-top:6px;"></div>
-    </div>
-  </div>
-</section>
-
-<!-- Popup Scene 4: Confirm buy/defend/storage -->
-<div id="confirmPopup" class="popup">
-  <div class="box">
-    <h3>Confirm action</h3>
-    <p id="confirmText">Buy this food?</p>
+  <!-- Scene 2/6: Coin selection -->
+  <section id="scene2" class="scene">
+    <h2 id="coinSceneTitle">Round 1: Choose your coins</h2>
+    <p class="help">Press D/F/G to add coins. W/A to switch player. S to confirm selection. You need <strong id="coinsToPick">5</strong> coins.</p>
     <div class="row">
-      <button class="btn secondary" id="optNah">Nah (W)</button>
-      <button class="btn ok" id="optYes">Yes (S)</button>
-      <button class="btn warn" id="optDef">Defend (A)</button>
+      <div class="card" style="flex:1;">
+        <h3>Current player</h3>
+        <div class="pill"><strong>#</strong><span id="currentPlayerIndex">1</span></div>
+        <div class="pill"><strong>Round</strong> <span id="roundNumber">1</span></div>
+        <div class="pill"><strong>Pick left</strong> <span id="pickLeft">5</span></div>
+        <div class="meter"><div id="pickMeter"></div></div>
+        <div style="margin-top:8px" class="note">Switch players with W/A; confirm with S.</div>
+      </div>
+      <div class="card" style="flex:1;">
+        <h3>Your coins</h3>
+        <div id="coinBag" class="row"></div>
+      </div>
     </div>
-    <p class="note" style="margin-top:12px">
-      Defend makes food unavailable to others this round; you must buy it next round or face waste elimination. You gain a special coin immediately.
-    </p>
-    <hr>
-    <div class="row">
-      <button class="btn" id="optStore">Use special coin to store this food (1 round)</button>
+  </section>
+
+  <!-- Scene 3: Food cards -->
+  <section id="scene3" class="scene">
+    <h2>Browse and buy food</h2>
+    <p class="help">Use W/A to scroll cards. Press S to open confirmation. Press Space when your shopping is complete.</p>
+
+    <div class="grid" id="foodGrid"></div>
+
+    <div class="row" style="margin-top:8px;">
+      <div id="selectedFoodPanel" class="card" style="flex:1;">
+        <h3>Selected card</h3>
+        <div id="selectedFoodDetails" class="note">Use W/A to select a card.</div>
+      </div>
+
+      <div id="yourStatusPanel" class="card" style="flex:1;">
+        <h3>Your status</h3>
+        <div class="pill"><strong>Player</strong> <span id="shopPlayer">1</span></div>
+        <div class="pill"><strong>Food value</strong> <span id="shopFoodValue">0</span></div>
+        <div class="pill"><strong>Special</strong> <span id="shopSpecial">0</span></div>
+        <div id="shopCoins" class="row" style="margin-top:6px;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Popup Scene 4: Confirm buy/defend/storage -->
+  <div id="confirmPopup" class="popup">
+    <div class="box">
+      <h3>Confirm action</h3>
+      <p id="confirmText">Buy this food?</p>
+      <div class="row">
+        <button class="btn secondary" id="optNah">Nah (W)</button>
+        <button class="btn ok" id="optYes">Yes (S)</button>
+        <button class="btn warn" id="optDef">Defend (A)</button>
+      </div>
+      <p class="note" style="margin-top:12px">
+        Defend makes food unavailable to others this round; you must buy it next round or face waste elimination. You gain a special coin immediately.
+      </p>
+      <hr>
+      <div class="row">
+        <button class="btn" id="optStore">Use special coin to store this food (1 round)</button>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Popup Scene 4.5: Special coin notice -->
-<div id="specialPopup" class="popup">
-  <div class="box">
-    <h3>Special coin added</h3>
-    <p>You’ve gained a special coin. It can replace any missing coin or store one food for next round.</p>
-    <div class="row"><button class="btn ok" id="specialOk">Continue</button></div>
-  </div>
-</div>
-
-<!-- Scene 5: Status board -->
-<section id="scene5" class="scene">
-  <h2>End of round status</h2>
-  <p class="help">Press Space to continue to next round.</p>
-  <div class="card">
-    <h3>Leaderboard</h3>
-    <table id="statusTable">
-      <thead>
-        <tr>
-          <th>Player</th>
-          <th>Food value</th>
-          <th>Coins (R/Y/B/S)</th>
-          <th>Elimination</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <div id="elimMessages" class="note" style="margin-top:8px;"></div>
-  </div>
-</section>
-
-<!-- Scene 7: Victory -->
-<section id="scene7" class="scene">
-  <h2>Victory</h2>
-  <div class="card">
-    <h3>Winner</h3>
-    <p id="winnerText">Player #</p>
-    <div class="row">
-      <button class="btn ok" id="playAgain">Play again</button>
+  <!-- Popup Scene 4.5: Special coin notice -->
+  <div id="specialPopup" class="popup">
+    <div class="box">
+      <h3>Special coin added</h3>
+      <p>You’ve gained a special coin. It can replace any missing coin or store one food for next round.</p>
+      <div class="row"><button class="btn ok" id="specialOk">Continue</button></div>
     </div>
   </div>
-</section>
 
+  <!-- Scene 5: Status board -->
+  <section id="scene5" class="scene">
+    <h2>End of round status</h2>
+    <p class="help">Press Space to continue to next round.</p>
+    <div class="card">
+      <h3>Leaderboard</h3>
+      <table id="statusTable">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Food value</th>
+            <th>Coins (R/Y/B/S)</th>
+            <th>Elimination</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div id="elimMessages" class="note" style="margin-top:8px;"></div>
+    </div>
+  </section>
+
+  <!-- Scene 7: Victory -->
+  <section id="scene7" class="scene">
+    <h2>Victory</h2>
+    <div class="card">
+      <h3>Winner</h3>
+      <p id="winnerText">Player #</p>
+      <div class="row">
+        <button class="btn ok" id="playAgain">Play again</button>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer>
@@ -466,14 +462,6 @@ function spendCoins(cost, coins, useSpecial) {
 
 function addSpecialCoin(playerIndex) { state.playersData[playerIndex].coins.S += 1; }
 
-function updateSelection(delta) {
-  const available = state.foodCards.filter(fc => !fc.reserved);
-  if (available.length === 0) return;
-  state.selectionIndex = (state.selectionIndex + delta + available.length) % available.length;
-  renderScene3();
-}
-
-// --- Rendering helpers ---
 function showScene(id) {
   state.scene = parseInt(id);
   document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
@@ -489,7 +477,7 @@ function showPopup(id, show=true) {
 
 // --- Scene 1 ---
 const playerCountEl = document.getElementById('playerCount');
-const playerMeterEl = document.getElementById('playerMeter'); // meter present in DOM
+const playerMeterEl = document.getElementById('playerMeter');
 
 document.getElementById('prevPlayersBtn').addEventListener('click', () => changePlayers(-1));
 document.getElementById('nextPlayersBtn').addEventListener('click', () => changePlayers(+1));
@@ -953,7 +941,5 @@ document.addEventListener('keydown', (e) => {
 // Initialize page
 changePlayers(0);
 </script>
-
 </body>
-
 </html>
