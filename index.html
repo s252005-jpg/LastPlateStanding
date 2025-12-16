@@ -726,7 +726,6 @@ function enterStatus() {
     .filter(p => p.alive)
     .sort((a,b) => (b.foodValue - a.foodValue) || (a.index - b.index));
 
-  // Determine eliminations
   const eliminated = new Set();
 
   // Waste elimination: highest value player gets ❌
@@ -739,7 +738,7 @@ function enterStatus() {
     if (p.foodValue < threshold) eliminated.add(p.index);
   });
 
-  // Build table rows (sorted view), with cutline after top player
+  // Build table rows (sorted view)
   sortedAlive.forEach((p, idx) => {
     const tr = document.createElement('tr');
     const isWaste = idx === 0;
@@ -752,25 +751,19 @@ function enterStatus() {
       <td class="${isWaste ? 'cross' : ''}">${status}</td>
     `;
     tbody.appendChild(tr);
-    if (idx === 0) tr.classList.add('cutline'); // visual line below the top player
+    if (idx === 0) tr.classList.add('cutline'); // cut line after top player
   });
-
-  // Messages summary
-  const msgs = [];
-  if (sortedAlive.length > 0) msgs.push(`Player ${sortedAlive[0].index+1} eliminated: Waste.`);
-  sortedAlive.forEach(p => { if (p.foodValue < threshold) msgs.push(`Player ${p.index+1} eliminated: Starved.`); });
-  document.getElementById('elimMessages').textContent = msgs.length ? msgs.join(' ') : 'No eliminations this round.';
 
   // Apply eliminations
   eliminated.forEach(i => state.playersData[i].alive = false);
 
-  // Reset per-round food (doesn’t carry over)
+  // Reset per-round food
   state.playersData.forEach(p => { p.foodValue = 0; p.defendedIds = []; });
 
-  // Advance round number
-  state.round += 1;
+  // Advance round
+  state.round++;
 
-  // If game ended
+  // Victory check
   const aliveCount = state.playersData.filter(p => p.alive).length;
   if (aliveCount <= 1) {
     const winnerIdx = state.playersData.findIndex(p => p.alive);
