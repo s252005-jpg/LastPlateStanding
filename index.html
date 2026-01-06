@@ -236,6 +236,7 @@ function initPlayers(n) {
 function currentCoins() { return state.playersData[state.currentPlayer].coins; }
 function currentPlayerData() { return state.playersData[state.currentPlayer]; }
 function starvationThresholdForRound(r) { return state.starvationBase + state.starvationGrowth * (r-1); }
+
 function canAfford(cost, coins) {
   let missingR = Math.max(0, cost.R - coins.R);
   let missingY = Math.max(0, cost.Y - coins.Y);
@@ -245,95 +246,115 @@ function canAfford(cost, coins) {
   if (totalMissing === 1 && coins.S > 0) return {ok:true, useSpecial:true};
   return {ok:false};
 }
+
 function spendCoins(cost, coins, useSpecial) {
   coins.R -= cost.R; coins.Y -= cost.Y; coins.B -= cost.B;
-  if (coins.R < 0) coins.R = 0; if (coins.Y < 0) coins.Y = 0; if (coins.B < 0) coins.B = 0;
+  if (coins.R < 0) coins.R = 0;
+  if (coins.Y < 0) coins.Y = 0;
+  if (coins.B < 0) coins.B = 0;
   if (useSpecial) coins.S--;
 }
+
 function addSpecialCoin(i) { state.playersData[i].coins.S += 1; }
+
 function showScene(id) {
   state.scene = id;
   document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
   document.getElementById('scene'+id)?.classList.add('active');
 }
-function showPopup(id, show=true) {
+
+function showPopup(id, show = true) {
   document.getElementById(id)?.classList.toggle('active', show);
 }
 
-// Scene 1
+// Scene 1 - Player count
 const playerCountEl = document.getElementById('playerCount');
 const playerMeterEl = document.getElementById('playerMeter');
+
 document.getElementById('prevPlayersBtn').onclick = () => changePlayers(-1);
 document.getElementById('nextPlayersBtn').onclick = () => changePlayers(+1);
 document.getElementById('confirmPlayersBtn').onclick = confirmPlayers;
 
 function changePlayers(delta) {
   let p = state.players + delta;
-  if (p < 2) p = 2; if (p > 8) p = 8;
+  if (p < 2) p = 2;
+  if (p > 8) p = 8;
   state.players = p;
   playerCountEl.textContent = p;
-  playerMeterEl.style.width = `${(p-2)/6*100}%`;
+  playerMeterEl.style.width = `${(p-2)/6 * 100}%`;
 }
+
 function confirmPlayers() {
   initPlayers(state.players);
   state.round = 1;
   enterCoinSelection();
 }
 
-// Scene 2
+// Scene 2 - Coin selection
 function enterCoinSelection() {
   showScene(2);
   document.getElementById('coinSceneTitle').textContent = `Round ${state.round}: Choose your coins`;
-  const toPick = state.round===1 ? state.coinsToPickStart : state.coinsToPickSubsequent;
+  const toPick = state.round === 1 ? state.coinsToPickStart : state.coinsToPickSubsequent;
   document.getElementById('coinsToPick').textContent = toPick;
   state.playersData.forEach(p => { p.completed = false; p.pickRound = 0; });
   state.currentPlayer = firstAliveIndex();
   state._visited = new Set();
   renderCoinSelection();
 }
+
 function renderCoinSelection() {
-  const toPick = state.round===1 ? state.coinsToPickStart : state.coinsToPickSubsequent;
+  const toPick = state.round === 1 ? state.coinsToPickStart : state.coinsToPickSubsequent;
   const picked = currentPlayerData().pickRound || 0;
   document.getElementById('currentPlayerIndex').textContent = state.currentPlayer + 1;
   document.getElementById('roundNumber').textContent = state.round;
   document.getElementById('pickLeft').textContent = Math.max(0, toPick - picked);
-  document.getElementById('pickMeter').style.width = `${(picked/toPick)*100}%`;
-  const bag = document.getElementById('coinBag'); bag.innerHTML = '';
+  document.getElementById('pickMeter').style.width = `${(picked / toPick) * 100}%`;
+
+  const bag = document.getElementById('coinBag');
+  bag.innerHTML = '';
   const c = currentCoins();
   ['R','Y','B','S'].forEach(k => {
-    const pill = document.createElement('div'); pill.className = 'pill';
+    const pill = document.createElement('div');
+    pill.className = 'pill';
     const dot = document.createElement('span');
     dot.className = 'dot ' + (k==='R'?'red':k==='Y'?'yellow':k==='B'?'blue':'special');
     pill.appendChild(dot);
     const t = document.createElement('span');
-    t.textContent = `${k==='S'?'Special':''} ${k}: ${c[k]}`;
-    pill.appendChild(t); bag.appendChild(pill);
+    t.textContent = `${k==='S'?'Special ':''}${k}: ${c[k]}`;
+    pill.appendChild(t);
+    bag.appendChild(pill);
   });
 }
+
 function addCoinForCurrent(k) {
-  const toPick = state.round===1 ? state.coinsToPickStart : state.coinsToPickSubsequent;
+  const toPick = state.round === 1 ? state.coinsToPickStart : state.coinsToPickSubsequent;
   let picked = currentPlayerData().pickRound || 0;
   if (picked >= toPick) return;
-  currentCoins()[k]++; currentPlayerData().pickRound = picked + 1;
+  currentCoins()[k]++;
+  currentPlayerData().pickRound = picked + 1;
   renderCoinSelection();
 }
+
 function coinSelectionConfirm() {
-  const toPick = state.round===1 ? state.coinsToPickStart : state.coinsToPickSubsequent;
+  const toPick = state.round === 1 ? state.coinsToPickStart : state.coinsToPickSubsequent;
   if ((currentPlayerData().pickRound || 0) < toPick) return;
   currentPlayerData().pickRound = 0;
   state._visited.add(state.currentPlayer);
-  const alive = state.playersData.map((p,i) => p.alive ? i : null).filter(x=>x!==null);
-  if (alive.every(i => state._visited.has(i))) {
+
+  const aliveIndices = state.playersData.map((p, i) => p.alive ? i : null).filter(x => x !== null);
+  if (aliveIndices.every(i => state._visited.has(i))) {
     enterShopping();
   } else {
     let next = state.currentPlayer;
-    do { next = (next + 1) % state.players; } while (!state.playersData[next].alive || state._visited.has(next));
+    do {
+      next = (next + 1) % state.players;
+    } while (!state.playersData[next].alive || state._visited.has(next));
     state.currentPlayer = next;
     renderCoinSelection();
   }
 }
 
-// Scene 3
+// Scene 3 - Shopping
 function enterShopping() {
   state._visited = null;
   showScene(3);
@@ -343,20 +364,28 @@ function enterShopping() {
   state.playersData.forEach(p => p.completed = false);
   renderScene3();
 }
+
 function firstAliveIndex() {
-  for (let i=0; i<state.players; i++) if (state.playersData[i].alive) return i;
+  for (let i = 0; i < state.players; i++) {
+    if (state.playersData[i].alive) return i;
+  }
   return 0;
 }
+
 function renderScene3() {
-  const grid = document.getElementById('foodGrid'); grid.innerHTML = '';
+  const grid = document.getElementById('foodGrid');
+  grid.innerHTML = '';
   const available = state.foodCards.filter(fc => !fc.reserved);
+
   available.forEach((fc, idx) => {
-    const card = document.createElement('div'); card.className = 'card';
+    const card = document.createElement('div');
+    card.className = 'card';
     if (idx === state.selectionIndex) {
       card.style.boxShadow = '0 0 0 3px rgba(33,158,188,0.4)';
-      setTimeout(() => card.scrollIntoView({behavior:'smooth', block:'center'}), 0);
+      setTimeout(() => card.scrollIntoView({behavior: 'smooth', block: 'center'}), 0);
     }
-    card.innerHTML = `<h3>${fc.name}</h3>
+    card.innerHTML = `
+      <h3>${fc.name}</h3>
       <div class="pill"><strong>Value</strong> ${fc.value}</div>
       <div class="row" style="margin-top:6px;">
         <div class="pill"><span class="dot red"></span> R ${fc.cost.R}</div>
@@ -366,24 +395,32 @@ function renderScene3() {
       <div class="note" style="margin-top:6px;">Press S to confirm action</div>`;
     grid.appendChild(card);
   });
+
   const sel = available[state.selectionIndex];
   document.getElementById('selectedFoodDetails').textContent = sel
     ? `${sel.name} — Value ${sel.value} — Cost R${sel.cost.R}/Y${sel.cost.Y}/B${sel.cost.B}`
     : 'No available food cards. Press Space to complete.';
+
   const pd = currentPlayerData();
   document.getElementById('shopPlayer').textContent = state.currentPlayer + 1;
   document.getElementById('shopFoodValue').textContent = pd.foodValue;
   document.getElementById('shopSpecial').textContent = pd.coins.S;
-  const coinsEl = document.getElementById('shopCoins'); coinsEl.innerHTML = '';
+
+  const coinsEl = document.getElementById('shopCoins');
+  coinsEl.innerHTML = '';
   ['R','Y','B','S'].forEach(k => {
-    const pill = document.createElement('div'); pill.className = 'pill';
+    const pill = document.createElement('div');
+    pill.className = 'pill';
     const dot = document.createElement('span');
     dot.className = 'dot ' + (k==='R'?'red':k==='Y'?'yellow':k==='B'?'blue':'special');
     pill.appendChild(dot);
-    const t = document.createElement('span'); t.textContent = `${k}: ${pd.coins[k]}`;
-    pill.appendChild(t); coinsEl.appendChild(pill);
+    const t = document.createElement('span');
+    t.textContent = `${k}: ${pd.coins[k]}`;
+    pill.appendChild(t);
+    coinsEl.appendChild(pill);
   });
 }
+
 function updateSelection(delta) {
   const available = state.foodCards.filter(fc => !fc.reserved);
   if (available.length === 0) return;
@@ -391,8 +428,9 @@ function updateSelection(delta) {
   renderScene3();
 }
 
-// Popups
+// Popup actions
 document.getElementById('optNah').onclick = () => showPopup('confirmPopup', false);
+
 document.getElementById('optYes').onclick = () => {
   const available = state.foodCards.filter(fc => !fc.reserved);
   const sel = available[state.selectionIndex];
@@ -402,11 +440,12 @@ document.getElementById('optYes').onclick = () => {
   spendCoins(sel.cost, currentCoins(), afford.useSpecial);
   currentPlayerData().foodValue += sel.value;
   const idx = state.foodCards.findIndex(fc => fc.id === sel.id);
-  state.foodCards.splice(idx,1);
+  state.foodCards.splice(idx, 1);
   state.selectionIndex = Math.min(state.selectionIndex, available.length - 2);
   showPopup('confirmPopup', false);
   renderScene3();
 };
+
 document.getElementById('optDef').onclick = () => {
   const available = state.foodCards.filter(fc => !fc.reserved);
   const sel = available[state.selectionIndex];
@@ -418,6 +457,7 @@ document.getElementById('optDef').onclick = () => {
   showPopup('confirmPopup', false);
   showPopup('specialPopup', true);
 };
+
 document.getElementById('optStore').onclick = () => {
   const available = state.foodCards.filter(fc => !fc.reserved);
   const sel = available[state.selectionIndex];
@@ -425,115 +465,151 @@ document.getElementById('optStore').onclick = () => {
   currentCoins().S--;
   currentPlayerData().stored.push({id: sel.id, value: sel.value});
   const idx = state.foodCards.findIndex(fc => fc.id === sel.id);
-  state.foodCards.splice(idx,1);
+  state.foodCards.splice(idx, 1);
   showPopup('confirmPopup', false);
   renderScene3();
 };
+
 document.getElementById('specialOk').onclick = () => {
   showPopup('specialPopup', false);
   renderScene3();
 };
 
-// Scene 5
+// Scene 5 - End of round
 function enterStatus() {
   showScene(5);
   const tbody = document.querySelector('#statusTable tbody');
   tbody.innerHTML = '';
   const threshold = starvationThresholdForRound(state.round);
+
   const sortedAlive = state.playersData
-    .map((p,i)=>({...p,index:i}))
-    .filter(p=>p.alive)
-    .sort((a,b)=> (b.foodValue - a.foodValue) || (a.index - b.index));
+    .map((p, i) => ({...p, index: i}))
+    .filter(p => p.alive)
+    .sort((a, b) => (b.foodValue - a.foodValue) || (a.index - b.index));
+
   const eliminated = new Set();
   if (sortedAlive.length > 0) eliminated.add(sortedAlive[0].index);
-  sortedAlive.forEach(p => { if (p.foodValue < threshold) eliminated.add(p.index); });
+  sortedAlive.forEach(p => {
+    if (p.foodValue < threshold) eliminated.add(p.index);
+  });
+
   sortedAlive.forEach((p, idx) => {
     const tr = document.createElement('tr');
-    const status = idx===0 ? '❌ Waste' : (p.foodValue < threshold ? 'Starved' : '');
+    const status = idx === 0 ? 'Waste' : (p.foodValue < threshold ? 'Starved' : '');
     tr.innerHTML = `<td>Player ${p.index+1}</td><td>${p.foodValue}</td>
       <td>${p.coins.R}/${p.coins.Y}/${p.coins.B}/${p.coins.S}</td>
       <td class="${idx===0?'cross':''}">${status}</td>`;
     tbody.appendChild(tr);
-    if (idx===0) tr.classList.add('cutline');
+    if (idx === 0) tr.classList.add('cutline');
   });
+
   const msgs = [];
-  if (sortedAlive.length>0) msgs.push(`Player ${sortedAlive[0].index+1} eliminated: Waste.`);
-  sortedAlive.forEach(p=>{if(p.foodValue<threshold) msgs.push(`Player ${p.index+1} eliminated: Starved.`);});
+  if (sortedAlive.length > 0) msgs.push(`Player ${sortedAlive[0].index+1} eliminated: Waste.`);
+  sortedAlive.forEach(p => {
+    if (p.foodValue < threshold) msgs.push(`Player ${p.index+1} eliminated: Starved.`);
+  });
   document.getElementById('elimMessages').textContent = msgs.length ? msgs.join(' ') : 'No eliminations this round.';
+
   eliminated.forEach(i => state.playersData[i].alive = false);
   state.playersData.forEach(p => { p.foodValue = 0; p.defendedIds = []; });
   state.round += 1;
 
-  const aliveCount = state.playersData.filter(p=>p.alive).length;
+  const aliveCount = state.playersData.filter(p => p.alive).length;
   if (aliveCount <= 1) {
-    const winner = state.playersData.findIndex(p=>p.alive);
+    const winner = state.playersData.findIndex(p => p.alive);
     enterVictory(winner);
   }
 }
 
-// Victory
+// Victory screen
 function enterVictory(winnerIdx) {
   showScene(7);
-  document.getElementById('winnerText').textContent = winnerIdx >= 0 ? `Player ${winnerIdx+1}` : 'No winner';
+  document.getElementById('winnerText').textContent = winnerIdx >= 0 ? `Player ${winnerIdx + 1}` : 'No winner';
 }
+
 document.getElementById('playAgain').onclick = () => {
-  state.players = 2; state.currentPlayer = 0; state.round = 1;
-  state.playersData = []; state.foodCards = []; state.selectionIndex = 0; state._visited = null;
-  playerCountEl.textContent = '2'; playerMeterEl.style.width = '0%';
+  state.players = 2;
+  state.currentPlayer = 0;
+  state.round = 1;
+  state.playersData = [];
+  state.foodCards = [];
+  state.selectionIndex = 0;
+  state._visited = null;
+  playerCountEl.textContent = '2';
+  playerMeterEl.style.width = '0%';
   showScene(1);
 };
 
-// Key bindings
+// Keyboard controls
 document.addEventListener('keydown', e => {
   const key = e.key.toLowerCase();
+
   if (document.getElementById('confirmPopup').classList.contains('active')) {
-    if (key==='w') showPopup('confirmPopup',false);
-    if (key==='s') document.getElementById('optYes').click();
-    if (key==='a') document.getElementById('optDef').click();
+    if (key === 'w') showPopup('confirmPopup', false);
+    if (key === 's') document.getElementById('optYes').click();
+    if (key === 'a') document.getElementById('optDef').click();
     return;
   }
+
   if (document.getElementById('specialPopup').classList.contains('active')) {
-    if (key==='s') showPopup('specialPopup',false) || renderScene3();
+    if (key === 's' || key === ' ') {
+      showPopup('specialPopup', false);
+      renderScene3();
+    }
     return;
   }
-  if (state.scene===1) {
-    if (key==='w') changePlayers(-1);
-    if (key==='a') changePlayers(+1);
-    if (key==='s') confirmPlayers();
-  } else if (state.scene===2) {
-    if (key==='d') addCoinForCurrent('R');
-    if (key==='f') addCoinForCurrent('Y');
-    if (key==='g') addCoinForCurrent('B');
-    if (key==='w') { let p=state.currentPlayer; do p=(p-1+state.players)%state.players; while(!state.playersData[p].alive); state.currentPlayer=p; renderCoinSelection(); }
-    if (key==='a') { let n=state.currentPlayer; do n=(n+1)%state.players; while(!state.playersData[n].alive); state.currentPlayer=n; renderCoinSelection(); }
-    if (key==='s') coinSelectionConfirm();
-  } else if (state.scene===3) {
-    if (key==='w') updateSelection(-1);
-    if (key==='a') updateSelection(+1);
-    if (key==='s') {
-      const sel = state.foodCards.filter(fc=>!fc.reserved)[state.selectionIndex];
+
+  if (state.scene === 1) {
+    if (key === 'w') changePlayers(-1);
+    if (key === 'a') changePlayers(+1);
+    if (key === 's') confirmPlayers();
+  } else if (state.scene === 2) {
+    if (key === 'd') addCoinForCurrent('R');
+    if (key === 'f') addCoinForCurrent('Y');
+    if (key === 'g') addCoinForCurrent('B');
+    if (key === 'w') {
+      let p = state.currentPlayer;
+      do { p = (p - 1 + state.players) % state.players; } while (!state.playersData[p].alive);
+      state.currentPlayer = p;
+      renderCoinSelection();
+    }
+    if (key === 'a') {
+      let n = state.currentPlayer;
+      do { n = (n + 1) % state.players; } while (!state.playersData[n].alive);
+      state.currentPlayer = n;
+      renderCoinSelection();
+    }
+    if (key === 's') coinSelectionConfirm();
+  } else if (state.scene === 3) {
+    if (key === 'w') updateSelection(-1);
+    if (key === 'a') updateSelection(+1);
+    if (key === 's') {
+      const available = state.foodCards.filter(fc => !fc.reserved);
+      const sel = available[state.selectionIndex];
       if (sel) {
         document.getElementById('confirmText').textContent = `Buy ${sel.name}? Value ${sel.value} (R${sel.cost.R}/Y${sel.cost.Y}/B${sel.cost.B})`;
-        showPopup('confirmPopup',true);
+        showPopup('confirmPopup', true);
       }
     }
-    if (key===' ') {
+    if (key === ' ') {
       currentPlayerData().completed = true;
       const allDone = state.playersData.every(p => !p.alive || p.completed);
-      if (allDone) enterStatus();
-      else {
+      if (allDone) {
+        enterStatus();
+      } else {
         let next = state.currentPlayer;
-        do next = (next+1)%state.players;
-        while (!state.playersData[next].alive || state.playersData[next].completed);
+        do {
+          next = (next + 1) % state.players;
+        } while (!state.playersData[next].alive || state.playersData[next].completed);
         state.currentPlayer = next;
         renderScene3();
       }
     }
-  } else if (state.scene===5) {
-    if (key===' ') {
+  } else if (state.scene === 5) {
+    if (key === ' ') {
       state.playersData.forEach(p => {
         if (p.alive) {
-          const storedVal = p.stored.reduce((a,it)=>a+it.value,0);
+          const storedVal = p.stored.reduce((a, it) => a + it.value, 0);
           p.foodValue += storedVal;
           p.stored = [];
         }
@@ -543,7 +619,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// Init
+// Initial setup
 changePlayers(0);
 </script>
 </body>
