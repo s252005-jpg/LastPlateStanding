@@ -110,7 +110,6 @@ footer { text-align: center; color: var(--muted); font-size: 12px; padding: 14px
           <button class="btn secondary" id="nextPlayersBtn">Next (A)</button>
           <button class="btn ok" id="confirmPlayersBtn">Ok (S)</button>
         </div>
-        <!-- Mobile buttons - only one set -->
         <button class="mobile-btn btn secondary" id="mobilePrevPlayers">Prev (W)</button>
         <button class="mobile-btn btn secondary" id="mobileNextPlayers">Next (A)</button>
         <button class="mobile-btn btn ok" id="mobileConfirmPlayers">Ok (S)</button>
@@ -235,7 +234,6 @@ footer { text-align: center; color: var(--muted); font-size: 12px; padding: 14px
 <footer>Last Plate Standing • Use Makey Makey keys. Refresh to reset if needed.</footer>
 
 <script>
-// Game State (unchanged)
 const state = {
   players: 2, currentPlayer: 0, round: 1,
   coinsToPickStart: 5, coinsToPickSubsequent: 3,
@@ -258,7 +256,6 @@ const baseFoodDeck = [
   { id: 'oil', name: 'Cooking Oil', value: 2, cost: {R:0,Y:2,B:0} }
 ];
 
-// Utilities (unchanged - abbreviated for brevity)
 function initPlayers(n) {
   state.playersData = Array.from({length: n}, () => ({
     coins: {R:0,Y:0,B:0,S:0}, foodValue: 0, stored: [], defendedIds: [], alive: true, completed: false, pickRound: 0
@@ -291,14 +288,15 @@ function addSpecialCoin(i) { state.playersData[i].coins.S += 1; }
 function showScene(id) {
   state.scene = id;
   document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
-  document.getElementById('scene'+id)?.classList.add('active');
+  const sceneEl = document.getElementById('scene' + id);
+  if (sceneEl) sceneEl.classList.add('active');
 }
 
 function showPopup(id, show = true) {
-  document.getElementById(id)?.classList.toggle('active', show);
+  const popup = document.getElementById(id);
+  if (popup) popup.classList.toggle('active', show);
 }
 
-// Scene 1 - Player count (fixed: only one set of mobile buttons)
 const playerCountEl = document.getElementById('playerCount');
 const playerMeterEl = document.getElementById('playerMeter');
 
@@ -325,7 +323,13 @@ function confirmPlayers() {
   enterCoinSelection();
 }
 
-// Scene 2, 3, 5, etc. (unchanged logic - food stays on normal buy, disappears only on defend)
+function firstAliveIndex() {
+  for (let i = 0; i < state.players; i++) {
+    if (state.playersData[i].alive) return i;
+  }
+  return 0;
+}
+
 function enterCoinSelection() {
   showScene(2);
   document.getElementById('coinSceneTitle').textContent = `Round ${state.round}: Choose your coins`;
@@ -404,11 +408,6 @@ function enterShopping() {
   renderScene3();
 }
 
-function firstAliveIndex() {
-  for (let i = 0; i < state.players; i++) if (state.playersData[i].alive) return i;
-  return 0;
-}
-
 function renderScene3() {
   const grid = document.getElementById('foodGrid');
   grid.innerHTML = '';
@@ -465,7 +464,7 @@ function updateSelection(delta) {
   renderScene3();
 }
 
-// Normal buy - food stays for other players
+// Normal buy - food stays available
 document.getElementById('optYes').onclick = () => {
   const available = state.foodCards.filter(fc => !fc.reserved);
   const sel = available[state.selectionIndex];
@@ -478,7 +477,7 @@ document.getElementById('optYes').onclick = () => {
   renderScene3();
 };
 
-// Defend - disappears for others this round only
+// Defend - unavailable this round only
 document.getElementById('optDef').onclick = () => {
   const available = state.foodCards.filter(fc => !fc.reserved);
   const sel = available[state.selectionIndex];
@@ -506,7 +505,6 @@ document.getElementById('optStore').onclick = () => {
 document.getElementById('optNah').onclick = () => showPopup('confirmPopup', false);
 document.getElementById('specialOk').onclick = () => { showPopup('specialPopup', false); renderScene3(); };
 
-// Mobile shopping
 document.getElementById('mobilePrevFood').onclick = () => updateSelection(-1);
 document.getElementById('mobileNextFood').onclick = () => updateSelection(+1);
 document.getElementById('mobileBuyFood').onclick = () => {
@@ -586,7 +584,6 @@ document.getElementById('mobileContinueRound').onclick = () => {
   enterCoinSelection();
 };
 
-// Keyboard controls
 document.addEventListener('keydown', e => {
   const key = e.key.toLowerCase();
 
@@ -597,7 +594,10 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (document.getElementById('specialPopup').classList.contains('active')) {
-    if (key === 's' || key === ' ') { showPopup('specialPopup', false); renderScene3(); }
+    if (key === 's' || key === ' ') {
+      showPopup('specialPopup', false);
+      renderScene3();
+    }
     return;
   }
 
