@@ -72,6 +72,20 @@ footer { text-align: center; color: var(--muted); font-size: 12px; padding: 14px
 #selectedFoodPanel, #yourStatusPanel { position: sticky; top: 20px; align-self: flex-start; }
 .cross { color: var(--red); font-weight: 700; }
 .cutline { border-top: 2px solid var(--warn); }
+
+/* Mobile-friendly buttons */
+.mobile-btn {
+  display: none;
+  margin-top: 12px;
+  padding: 12px 16px;
+  font-size: 16px;
+  width: 100%;
+}
+@media (max-width: 768px) {
+  .mobile-btn { display: block; }
+  .bar { flex-direction: column; }
+  .bar .btn { width: 100%; }
+}
 </style>
 </head>
 <body>
@@ -96,6 +110,10 @@ footer { text-align: center; color: var(--muted); font-size: 12px; padding: 14px
           <button class="btn secondary" id="nextPlayersBtn">Next (A)</button>
           <button class="btn ok" id="confirmPlayersBtn">Ok (S)</button>
         </div>
+        <!-- Mobile buttons - only one set -->
+        <button class="mobile-btn btn secondary" id="mobilePrevPlayers">Prev (W)</button>
+        <button class="mobile-btn btn secondary" id="mobileNextPlayers">Next (A)</button>
+        <button class="mobile-btn btn ok" id="mobileConfirmPlayers">Ok (S)</button>
       </div>
       <div class="card" style="flex:2;">
         <h3>Game goal</h3>
@@ -127,6 +145,12 @@ footer { text-align: center; color: var(--muted); font-size: 12px; padding: 14px
         <div id="coinBag" class="row"></div>
       </div>
     </div>
+    <div class="bar" style="margin-top:16px;">
+      <button class="btn secondary mobile-btn" id="mobileRedCoin">Red (D)</button>
+      <button class="btn secondary mobile-btn" id="mobileYellowCoin">Yellow (F)</button>
+      <button class="btn secondary mobile-btn" id="mobileBlueCoin">Blue (G)</button>
+      <button class="btn ok mobile-btn" id="mobileCoinConfirm">Confirm (S)</button>
+    </div>
   </section>
 
   <section id="scene3" class="scene">
@@ -146,6 +170,12 @@ footer { text-align: center; color: var(--muted); font-size: 12px; padding: 14px
         <div id="shopCoins" class="row" style="margin-top:6px;"></div>
       </div>
     </div>
+    <div class="bar" style="margin-top:16px;">
+      <button class="btn secondary mobile-btn" id="mobilePrevFood">Previous (W)</button>
+      <button class="btn secondary mobile-btn" id="mobileNextFood">Next (A)</button>
+      <button class="btn ok mobile-btn" id="mobileBuyFood">Buy / Confirm (S)</button>
+      <button class="btn ok mobile-btn" id="mobileCompleteShopping">Complete Shopping (Space)</button>
+    </div>
   </section>
 
   <div id="confirmPopup" class="popup">
@@ -158,7 +188,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; padding: 14px
         <button class="btn warn" id="optDef">Defend (A)</button>
       </div>
       <p class="note" style="margin-top:12px">
-        Defend makes food unavailable to others this round; you must buy it next round or face waste elimination. You gain a special coin immediately.
+        Defend makes food unavailable to others this round only. You gain a special coin immediately.
       </p>
       <hr>
       <div class="row">
@@ -188,6 +218,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; padding: 14px
       </table>
       <div id="elimMessages" class="note" style="margin-top:8px;"></div>
     </div>
+    <button class="mobile-btn btn ok" id="mobileContinueRound">Continue to Next Round (Space)</button>
   </section>
 
   <section id="scene7" class="scene">
@@ -204,7 +235,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; padding: 14px
 <footer>Last Plate Standing • Use Makey Makey keys. Refresh to reset if needed.</footer>
 
 <script>
-// Game State
+// Game State (unchanged)
 const state = {
   players: 2, currentPlayer: 0, round: 1,
   coinsToPickStart: 5, coinsToPickSubsequent: 3,
@@ -227,7 +258,7 @@ const baseFoodDeck = [
   { id: 'oil', name: 'Cooking Oil', value: 2, cost: {R:0,Y:2,B:0} }
 ];
 
-// Utilities
+// Utilities (unchanged - abbreviated for brevity)
 function initPlayers(n) {
   state.playersData = Array.from({length: n}, () => ({
     coins: {R:0,Y:0,B:0,S:0}, foodValue: 0, stored: [], defendedIds: [], alive: true, completed: false, pickRound: 0
@@ -267,13 +298,17 @@ function showPopup(id, show = true) {
   document.getElementById(id)?.classList.toggle('active', show);
 }
 
-// Scene 1 - Player count
+// Scene 1 - Player count (fixed: only one set of mobile buttons)
 const playerCountEl = document.getElementById('playerCount');
 const playerMeterEl = document.getElementById('playerMeter');
 
 document.getElementById('prevPlayersBtn').onclick = () => changePlayers(-1);
 document.getElementById('nextPlayersBtn').onclick = () => changePlayers(+1);
 document.getElementById('confirmPlayersBtn').onclick = confirmPlayers;
+
+document.getElementById('mobilePrevPlayers').onclick = () => changePlayers(-1);
+document.getElementById('mobileNextPlayers').onclick = () => changePlayers(+1);
+document.getElementById('mobileConfirmPlayers').onclick = confirmPlayers;
 
 function changePlayers(delta) {
   let p = state.players + delta;
@@ -290,7 +325,7 @@ function confirmPlayers() {
   enterCoinSelection();
 }
 
-// Scene 2 - Coin selection
+// Scene 2, 3, 5, etc. (unchanged logic - food stays on normal buy, disappears only on defend)
 function enterCoinSelection() {
   showScene(2);
   document.getElementById('coinSceneTitle').textContent = `Round ${state.round}: Choose your coins`;
@@ -354,7 +389,11 @@ function coinSelectionConfirm() {
   }
 }
 
-// Scene 3 - Shopping
+document.getElementById('mobileRedCoin').onclick = () => addCoinForCurrent('R');
+document.getElementById('mobileYellowCoin').onclick = () => addCoinForCurrent('Y');
+document.getElementById('mobileBlueCoin').onclick = () => addCoinForCurrent('B');
+document.getElementById('mobileCoinConfirm').onclick = coinSelectionConfirm;
+
 function enterShopping() {
   state._visited = null;
   showScene(3);
@@ -366,9 +405,7 @@ function enterShopping() {
 }
 
 function firstAliveIndex() {
-  for (let i = 0; i < state.players; i++) {
-    if (state.playersData[i].alive) return i;
-  }
+  for (let i = 0; i < state.players; i++) if (state.playersData[i].alive) return i;
   return 0;
 }
 
@@ -428,9 +465,7 @@ function updateSelection(delta) {
   renderScene3();
 }
 
-// Popup actions
-document.getElementById('optNah').onclick = () => showPopup('confirmPopup', false);
-
+// Normal buy - food stays for other players
 document.getElementById('optYes').onclick = () => {
   const available = state.foodCards.filter(fc => !fc.reserved);
   const sel = available[state.selectionIndex];
@@ -439,13 +474,11 @@ document.getElementById('optYes').onclick = () => {
   if (!afford.ok) { alert('Not enough coins!'); return; }
   spendCoins(sel.cost, currentCoins(), afford.useSpecial);
   currentPlayerData().foodValue += sel.value;
-  const idx = state.foodCards.findIndex(fc => fc.id === sel.id);
-  state.foodCards.splice(idx, 1);
-  state.selectionIndex = Math.min(state.selectionIndex, available.length - 2);
   showPopup('confirmPopup', false);
   renderScene3();
 };
 
+// Defend - disappears for others this round only
 document.getElementById('optDef').onclick = () => {
   const available = state.foodCards.filter(fc => !fc.reserved);
   const sel = available[state.selectionIndex];
@@ -470,12 +503,32 @@ document.getElementById('optStore').onclick = () => {
   renderScene3();
 };
 
-document.getElementById('specialOk').onclick = () => {
-  showPopup('specialPopup', false);
-  renderScene3();
+document.getElementById('optNah').onclick = () => showPopup('confirmPopup', false);
+document.getElementById('specialOk').onclick = () => { showPopup('specialPopup', false); renderScene3(); };
+
+// Mobile shopping
+document.getElementById('mobilePrevFood').onclick = () => updateSelection(-1);
+document.getElementById('mobileNextFood').onclick = () => updateSelection(+1);
+document.getElementById('mobileBuyFood').onclick = () => {
+  const available = state.foodCards.filter(fc => !fc.reserved);
+  const sel = available[state.selectionIndex];
+  if (sel) {
+    document.getElementById('confirmText').textContent = `Buy ${sel.name}? Value ${sel.value} (R${sel.cost.R}/Y${sel.cost.Y}/B${sel.cost.B})`;
+    showPopup('confirmPopup', true);
+  }
+};
+document.getElementById('mobileCompleteShopping').onclick = () => {
+  currentPlayerData().completed = true;
+  const allDone = state.playersData.every(p => !p.alive || p.completed);
+  if (allDone) enterStatus();
+  else {
+    let next = state.currentPlayer;
+    do { next = (next + 1) % state.players; } while (!state.playersData[next].alive || state.playersData[next].completed);
+    state.currentPlayer = next;
+    renderScene3();
+  }
 };
 
-// Scene 5 - End of round
 function enterStatus() {
   showScene(5);
   const tbody = document.querySelector('#statusTable tbody');
@@ -489,9 +542,7 @@ function enterStatus() {
 
   const eliminated = new Set();
   if (sortedAlive.length > 0) eliminated.add(sortedAlive[0].index);
-  sortedAlive.forEach(p => {
-    if (p.foodValue < threshold) eliminated.add(p.index);
-  });
+  sortedAlive.forEach(p => { if (p.foodValue < threshold) eliminated.add(p.index); });
 
   sortedAlive.forEach((p, idx) => {
     const tr = document.createElement('tr');
@@ -505,39 +556,34 @@ function enterStatus() {
 
   const msgs = [];
   if (sortedAlive.length > 0) msgs.push(`Player ${sortedAlive[0].index+1} eliminated: Waste.`);
-  sortedAlive.forEach(p => {
-    if (p.foodValue < threshold) msgs.push(`Player ${p.index+1} eliminated: Starved.`);
-  });
+  sortedAlive.forEach(p => { if (p.foodValue < threshold) msgs.push(`Player ${p.index+1} eliminated: Starved.`); });
   document.getElementById('elimMessages').textContent = msgs.length ? msgs.join(' ') : 'No eliminations this round.';
 
   eliminated.forEach(i => state.playersData[i].alive = false);
   state.playersData.forEach(p => { p.foodValue = 0; p.defendedIds = []; });
   state.round += 1;
 
-  const aliveCount = state.playersData.filter(p => p.alive).length;
-  if (aliveCount <= 1) {
-    const winner = state.playersData.findIndex(p => p.alive);
-    enterVictory(winner);
+  if (state.playersData.filter(p => p.alive).length <= 1) {
+    enterVictory(state.playersData.findIndex(p => p.alive));
   }
 }
 
-// Victory screen
 function enterVictory(winnerIdx) {
   showScene(7);
   document.getElementById('winnerText').textContent = winnerIdx >= 0 ? `Player ${winnerIdx + 1}` : 'No winner';
 }
 
-document.getElementById('playAgain').onclick = () => {
-  state.players = 2;
-  state.currentPlayer = 0;
-  state.round = 1;
-  state.playersData = [];
-  state.foodCards = [];
-  state.selectionIndex = 0;
-  state._visited = null;
-  playerCountEl.textContent = '2';
-  playerMeterEl.style.width = '0%';
-  showScene(1);
+document.getElementById('playAgain').onclick = () => location.reload();
+
+document.getElementById('mobileContinueRound').onclick = () => {
+  state.playersData.forEach(p => {
+    if (p.alive) {
+      const storedVal = p.stored.reduce((a, it) => a + it.value, 0);
+      p.foodValue += storedVal;
+      p.stored = [];
+    }
+  });
+  enterCoinSelection();
 };
 
 // Keyboard controls
@@ -550,12 +596,8 @@ document.addEventListener('keydown', e => {
     if (key === 'a') document.getElementById('optDef').click();
     return;
   }
-
   if (document.getElementById('specialPopup').classList.contains('active')) {
-    if (key === 's' || key === ' ') {
-      showPopup('specialPopup', false);
-      renderScene3();
-    }
+    if (key === 's' || key === ' ') { showPopup('specialPopup', false); renderScene3(); }
     return;
   }
 
@@ -594,32 +636,26 @@ document.addEventListener('keydown', e => {
     if (key === ' ') {
       currentPlayerData().completed = true;
       const allDone = state.playersData.every(p => !p.alive || p.completed);
-      if (allDone) {
-        enterStatus();
-      } else {
+      if (allDone) enterStatus();
+      else {
         let next = state.currentPlayer;
-        do {
-          next = (next + 1) % state.players;
-        } while (!state.playersData[next].alive || state.playersData[next].completed);
+        do { next = (next + 1) % state.players; } while (!state.playersData[next].alive || state.playersData[next].completed);
         state.currentPlayer = next;
         renderScene3();
       }
     }
-  } else if (state.scene === 5) {
-    if (key === ' ') {
-      state.playersData.forEach(p => {
-        if (p.alive) {
-          const storedVal = p.stored.reduce((a, it) => a + it.value, 0);
-          p.foodValue += storedVal;
-          p.stored = [];
-        }
-      });
-      enterCoinSelection();
-    }
+  } else if (state.scene === 5 && key === ' ') {
+    state.playersData.forEach(p => {
+      if (p.alive) {
+        const storedVal = p.stored.reduce((a, it) => a + it.value, 0);
+        p.foodValue += storedVal;
+        p.stored = [];
+      }
+    });
+    enterCoinSelection();
   }
 });
 
-// Initial setup
 changePlayers(0);
 </script>
 </body>
