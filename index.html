@@ -7,7 +7,6 @@
 <style>
 :root {
   --bg: #FFF7E6;
-  --primary: #FFB703;
   --accent: #219EBC;
   --accent2: #8ECAE6;
   --ok: #2CB67D;
@@ -23,7 +22,7 @@
 * { box-sizing: border-box; }
 body {
   margin: 0;
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   background: linear-gradient(120deg, var(--bg), #FFFBEA);
   color: var(--text);
 }
@@ -35,45 +34,30 @@ header {
   align-items: center;
   justify-content: space-between;
 }
-header h1 { margin: 0; font-size: 20px; letter-spacing: 0.3px; }
-header .keys { font-size: 14px; opacity: 0.9; }
+header h1 { margin: 0; font-size: 20px; }
 main { max-width: 1000px; margin: 24px auto; padding: 0 16px 40px; }
 .scene { display: none; background: var(--card); border-radius: 16px; box-shadow: 0 10px 22px rgba(0,0,0,0.08); padding: 24px; margin-bottom: 24px; }
 .scene.active { display: block; }
-h2 { margin-top: 0; color: var(--accent); }
 .row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
 .pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: #F8F9FA; border: 1px solid #E9ECEF; font-size: 14px; }
 .pill .dot { width: 10px; height: 10px; border-radius: 50%; }
-.dot.yellow { background: var(--yellow); }
 .dot.red { background: var(--red); }
+.dot.yellow { background: var(--yellow); }
 .dot.blue { background: var(--blue); }
 .dot.special { background: var(--special); }
-.card { border: 1px solid #eee; border-radius: 12px; padding: 16px; background: #fff; min-width: 220px; max-width: 280px; flex: 1; }
+.card { border: 1px solid #eee; border-radius: 12px; padding: 16px; background: #fff; flex: 1; min-width: 220px; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
-.btn { display: inline-block; background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 12px rgba(33,158,188,0.2); transition: transform 0.02s ease-in; }
-.btn:active { transform: translateY(1px); }
+.btn { background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; font-weight: 600; }
 .btn.secondary { background: var(--accent2); }
 .btn.ok { background: var(--ok); }
 .btn.warn { background: var(--warn); }
-.help { background: #FFF4D6; border: 1px dashed #FFD07B; color: #7A5B00; border-radius: 10px; padding: 12px 14px; font-size: 14px; margin: 12px 0; }
-.kbd { display: inline-block; padding: 3px 6px; border: 1px solid #ddd; border-bottom-width: 3px; border-radius: 6px; background: #fafafa; font-weight: 700; font-size: 13px; margin: 0 2px; }
-.bar { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0 0; }
+.help { background: #FFF4D6; border: 1px dashed #FFD07B; color: #7A5B00; border-radius: 10px; padding: 12px 14px; margin: 12px 0; }
+.bar { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
 .meter { height: 10px; background: #EEF6FF; border-radius: 6px; overflow: hidden; margin-top: 8px; }
 .meter > div { height: 100%; background: linear-gradient(90deg, var(--ok), var(--accent)); width: 0%; transition: width 200ms ease; }
-.popup { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.35); padding: 20px; z-index: 10; }
+.popup { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.35); z-index: 10; }
 .popup.active { display: flex; }
 .popup .box { background: white; border-radius: 16px; max-width: 520px; width: 100%; padding: 20px; box-shadow: 0 12px 32px rgba(0,0,0,0.18); }
-.box h3 { margin-top: 0; color: var(--accent); }
-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
-th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; font-size: 14px; }
-th { color: var(--muted); font-weight: 600; }
-.note { color: var(--muted); font-size: 13px; }
-footer { text-align: center; color: var(--muted); font-size: 12px; padding: 14px 0 24px; }
-#selectedFoodPanel, #yourStatusPanel { position: sticky; top: 20px; align-self: flex-start; }
-.cross { color: var(--red); font-weight: 700; }
-.cutline { border-top: 2px solid var(--warn); }
-
-/* Mobile-friendly buttons */
 .mobile-btn {
   display: none;
   margin-top: 12px;
@@ -91,11 +75,6 @@ footer { text-align: center; color: var(--muted); font-size: 12px; padding: 14px
 <body>
 <header>
   <h1>Last Plate Standing</h1>
-  <div class="keys">
-    Controls: <span class="kbd">W</span> Prev • <span class="kbd">A</span> Next •
-    <span class="kbd">S</span> Ok • Coins: <span class="kbd">D</span> Red, <span class="kbd">F</span> Yellow, <span class="kbd">G</span> Blue •
-    <span class="kbd">Space</span> Complete
-  </div>
 </header>
 <main>
   <section id="scene1" class="scene active">
@@ -110,6 +89,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; padding: 14px
           <button class="btn secondary" id="nextPlayersBtn">Next (A)</button>
           <button class="btn ok" id="confirmPlayersBtn">Ok (S)</button>
         </div>
+        <!-- Mobile buttons - only one set -->
         <button class="mobile-btn btn secondary" id="mobilePrevPlayers">Prev (W)</button>
         <button class="mobile-btn btn secondary" id="mobileNextPlayers">Next (A)</button>
         <button class="mobile-btn btn ok" id="mobileConfirmPlayers">Ok (S)</button>
@@ -234,6 +214,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; padding: 14px
 <footer>Last Plate Standing • Use Makey Makey keys. Refresh to reset if needed.</footer>
 
 <script>
+// Game State
 const state = {
   players: 2, currentPlayer: 0, round: 1,
   coinsToPickStart: 5, coinsToPickSubsequent: 3,
@@ -256,6 +237,7 @@ const baseFoodDeck = [
   { id: 'oil', name: 'Cooking Oil', value: 2, cost: {R:0,Y:2,B:0} }
 ];
 
+// Utilities
 function initPlayers(n) {
   state.playersData = Array.from({length: n}, () => ({
     coins: {R:0,Y:0,B:0,S:0}, foodValue: 0, stored: [], defendedIds: [], alive: true, completed: false, pickRound: 0
@@ -276,10 +258,9 @@ function canAfford(cost, coins) {
 }
 
 function spendCoins(cost, coins, useSpecial) {
-  coins.R -= cost.R; coins.Y -= cost.Y; coins.B -= cost.B;
-  if (coins.R < 0) coins.R = 0;
-  if (coins.Y < 0) coins.Y = 0;
-  if (coins.B < 0) coins.B = 0;
+  coins.R = Math.max(0, coins.R - cost.R);
+  coins.Y = Math.max(0, coins.Y - cost.Y);
+  coins.B = Math.max(0, coins.B - cost.B);
   if (useSpecial) coins.S--;
 }
 
@@ -288,15 +269,16 @@ function addSpecialCoin(i) { state.playersData[i].coins.S += 1; }
 function showScene(id) {
   state.scene = id;
   document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
-  const sceneEl = document.getElementById('scene' + id);
-  if (sceneEl) sceneEl.classList.add('active');
+  const el = document.getElementById('scene' + id);
+  if (el) el.classList.add('active');
 }
 
 function showPopup(id, show = true) {
-  const popup = document.getElementById(id);
-  if (popup) popup.classList.toggle('active', show);
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('active', show);
 }
 
+// Scene 1 - Player count
 const playerCountEl = document.getElementById('playerCount');
 const playerMeterEl = document.getElementById('playerMeter');
 
@@ -323,13 +305,7 @@ function confirmPlayers() {
   enterCoinSelection();
 }
 
-function firstAliveIndex() {
-  for (let i = 0; i < state.players; i++) {
-    if (state.playersData[i].alive) return i;
-  }
-  return 0;
-}
-
+// Scene 2 - Coin selection
 function enterCoinSelection() {
   showScene(2);
   document.getElementById('coinSceneTitle').textContent = `Round ${state.round}: Choose your coins`;
@@ -398,6 +374,7 @@ document.getElementById('mobileYellowCoin').onclick = () => addCoinForCurrent('Y
 document.getElementById('mobileBlueCoin').onclick = () => addCoinForCurrent('B');
 document.getElementById('mobileCoinConfirm').onclick = coinSelectionConfirm;
 
+// Scene 3 - Shopping
 function enterShopping() {
   state._visited = null;
   showScene(3);
@@ -406,6 +383,13 @@ function enterShopping() {
   state.currentPlayer = firstAliveIndex();
   state.playersData.forEach(p => p.completed = false);
   renderScene3();
+}
+
+function firstAliveIndex() {
+  for (let i = 0; i < state.players; i++) {
+    if (state.playersData[i].alive) return i;
+  }
+  return 0;
 }
 
 function renderScene3() {
@@ -464,7 +448,7 @@ function updateSelection(delta) {
   renderScene3();
 }
 
-// Normal buy - food stays available
+// Normal buy - food stays available for other players
 document.getElementById('optYes').onclick = () => {
   const available = state.foodCards.filter(fc => !fc.reserved);
   const sel = available[state.selectionIndex];
@@ -477,7 +461,7 @@ document.getElementById('optYes').onclick = () => {
   renderScene3();
 };
 
-// Defend - unavailable this round only
+// Defend - food unavailable to others this round only
 document.getElementById('optDef').onclick = () => {
   const available = state.foodCards.filter(fc => !fc.reserved);
   const sel = available[state.selectionIndex];
@@ -505,6 +489,7 @@ document.getElementById('optStore').onclick = () => {
 document.getElementById('optNah').onclick = () => showPopup('confirmPopup', false);
 document.getElementById('specialOk').onclick = () => { showPopup('specialPopup', false); renderScene3(); };
 
+// Mobile shopping buttons
 document.getElementById('mobilePrevFood').onclick = () => updateSelection(-1);
 document.getElementById('mobileNextFood').onclick = () => updateSelection(+1);
 document.getElementById('mobileBuyFood').onclick = () => {
@@ -527,6 +512,7 @@ document.getElementById('mobileCompleteShopping').onclick = () => {
   }
 };
 
+// Scene 5 - End of round
 function enterStatus() {
   showScene(5);
   const tbody = document.querySelector('#statusTable tbody');
@@ -584,6 +570,7 @@ document.getElementById('mobileContinueRound').onclick = () => {
   enterCoinSelection();
 };
 
+// Keyboard controls
 document.addEventListener('keydown', e => {
   const key = e.key.toLowerCase();
 
